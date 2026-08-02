@@ -1,0 +1,40 @@
+CREATE TABLE IF NOT EXISTS leads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  public_id TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  status TEXT NOT NULL DEFAULT 'new',
+  injured TEXT,
+  incident_type TEXT,
+  state TEXT,
+  accident_date TEXT,
+  treatment TEXT,
+  injuries TEXT,
+  has_attorney TEXT,
+  fault TEXT,
+  description TEXT,
+  full_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT NOT NULL,
+  preferred_contact TEXT,
+  consent INTEGER NOT NULL DEFAULT 0,
+  source_page TEXT DEFAULT 'case-review',
+  ip_hash TEXT,
+  user_agent TEXT,
+  notes TEXT,
+  assigned_firm TEXT
+);
+
+CREATE TABLE IF NOT EXISTS law_firms (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  firm_name TEXT NOT NULL,
+  contact_name TEXT,
+  email TEXT,
+  phone TEXT,
+  state TEXT,
+  city TEXT,
+  practice_areas TEXT,
+  max_daily_leads INTEGER DEFAULT 10,
+  status TEXT DEFAULT 'active',
+  created_at TEXT DEFAULT (datetime('now'))
+);

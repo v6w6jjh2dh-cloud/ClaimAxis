@@ -1,18 +1,18 @@
-CLAIMAXIS ENTERPRISE V1
+CLAIMAXIS LIVE D1 FINAL
 
-Includes:
-- Working Cloudflare Pages Functions API
-- D1 lead storage
-- Lead status workflow
-- Law firm partnership request storage
-- Admin dashboard
-- Firm requests view
-- Health endpoint: /api/health
-- Migration for the user's current old D1 schema
-- Arabic setup guide
+Compatible with the database currently created by the user:
+- leads
+- law_firms
 
-Required:
+Cloudflare requirements:
 - D1 binding: DB
 - Secret: ADMIN_TOKEN
 
-Start with START-HERE-AR.txt.
+Pages Functions routes:
+- POST /api/leads
+- GET /api/leads
+- GET/PATCH /api/leads/:id
+- POST/GET /api/firm-requests
+- GET /api/health
+
+Read START-NOW-AR.txt.

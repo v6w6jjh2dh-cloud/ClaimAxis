@@ -1,48 +1,64 @@
 import { json, clean, requireAdmin } from "../../_lib/utils.js";
 
-const ALLOWED = new Set(["new","contacted","approved","declined"]);
+const statuses = new Set([
+  "new","contacted","qualified","sent_to_firm",
+  "signed","closed","rejected"
+]);
 
 export async function onRequestGet({ request, env, params }) {
-  if (!requireAdmin(request, env)) return json({ ok:false, error:"Unauthorized." }, 401);
+  if (!requireAdmin(request, env)) {
+    return json({ ok:false, error:"Unauthorized." }, 401);
+  }
 
-  const item = await env.DB.prepare(`
-    SELECT id, public_id, created_at, status, firm_name, contact_name,
-           email, phone, territory, practice_area, lead_type,
-           volume, budget, message, notes
-    FROM firm_requests
+  const lead = await env.DB.prepare(`
+    SELECT *
+    FROM leads
     WHERE public_id = ?
     LIMIT 1
-  `).bind(clean(params.id, 50)).first();
+  `).bind(clean(params.id, 60)).first();
 
-  if (!item) return json({ ok:false, error:"Request not found." }, 404);
-  return json({ ok:true, request:item });
+  if (!lead) return json({ ok:false, error:"Lead not found." }, 404);
+  delete lead.ip_hash;
+  return json({ ok:true, lead });
 }
 
 export async function onRequestPatch({ request, env, params }) {
-  if (!requireAdmin(request, env)) return json({ ok:false, error:"Unauthorized." }, 401);
+  if (!requireAdmin(request, env)) {
+    return json({ ok:false, error:"Unauthorized." }, 401);
+  }
 
-  const publicId = clean(params.id, 50);
+  const id = clean(params.id, 60);
   const body = await request.json();
-  const existing = await env.DB.prepare(`
-    SELECT id, status, notes FROM firm_requests
-    WHERE public_id = ? LIMIT 1
-  `).bind(publicId).first();
 
-  if (!existing) return json({ ok:false, error:"Request not found." }, 404);
+  const lead = await env.DB.prepare(`
+    SELECT status, notes, assigned_firm
+    FROM leads
+    WHERE public_id = ?
+    LIMIT 1
+  `).bind(id).first();
 
-  const status = clean(body.status || existing.status, 30);
-  if (!ALLOWED.has(status)) return json({ ok:false, error:"Invalid status." }, 400);
+  if (!lead) return json({ ok:false, error:"Lead not found." }, 404);
+
+  const status = clean(body.status || lead.status, 40);
+  if (!statuses.has(status)) {
+    return json({ ok:false, error:"Invalid status." }, 400);
+  }
 
   const notes = clean(
-    body.notes !== undefined ? body.notes : existing.notes,
+    body.notes !== undefined ? body.notes : lead.notes,
     5000
   );
 
+  const assignedFirm = clean(
+    body.assigned_firm !== undefined ? body.assigned_firm : lead.assigned_firm,
+    250
+  );
+
   await env.DB.prepare(`
-    UPDATE firm_requests
-    SET status = ?, notes = ?
-    WHERE id = ?
-  `).bind(status, notes, existing.id).run();
+    UPDATE leads
+    SET status = ?, notes = ?, assigned_firm = ?, updated_at = datetime('now')
+    WHERE public_id = ?
+  `).bind(status, notes, assignedFirm, id).run();
 
   return json({ ok:true });
 }

@@ -219,8 +219,8 @@ async function loadFirmRequests(){
       row.className='dash-row';
       row.innerHTML=`
         <span><strong>${escapeHtml(item.firm_name)}</strong><small>${escapeHtml(item.contact_name||'')}</small></span>
-        <span>${escapeHtml(item.territory||'—')}</span>
-        <span>${escapeHtml(item.practice_area||'—')}</span>
+        <span>${escapeHtml(item.state||'—')}</span>
+        <span>${escapeHtml(item.practice_areas||'—')}</span>
         <span><b class="status ${statusClass(item.status)}">${escapeHtml(prettyStatus(item.status))}</b></span>
         <span>${escapeHtml(prettyDate(item.created_at))}</span>
       `;

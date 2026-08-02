@@ -1,0 +1,44 @@
+CLAIMAXIS LIVE D1 — آخر خطوتين
+==============================
+
+أنت أنجزت:
+- قاعدة claimaxis-db
+- جدول leads
+- جدول law_firms
+- D1 Binding باسم DB
+
+الآن:
+
+1) ارفع كل الملفات والمجلدات من هذه النسخة إلى GitHub.
+   مهم جدًا أن يبقى مجلد functions كما هو.
+
+2) داخل Cloudflare:
+   Workers & Pages > claimaxis > Settings > Variables and secrets > Add
+
+   Type:
+   Secret
+
+   Name:
+   ADMIN_TOKEN
+
+   Value:
+   اختر كلمة سر طويلة خاصة بك.
+
+3) اعمل Retry deployment أو ارفع الملفات إلى GitHub وانتظر النشر.
+
+4) اختبر:
+   https://claimaxis.com/api/health
+
+   يجب أن يظهر:
+   "ok": true
+
+5) عبئ استبيانًا تجريبيًا:
+   https://claimaxis.com/case-review.html
+
+6) افتح لوحة التحكم:
+   https://claimaxis.com/dashboard.html
+
+   واكتب ADMIN_TOKEN الذي اخترته.
+
+مهم:
+لا تشارك ADMIN_TOKEN مع أي شخص.
