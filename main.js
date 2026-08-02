@@ -22,3 +22,23 @@ const glow=document.querySelector('.cursor-glow');
 if(glow){
   window.addEventListener('pointermove',e=>{glow.style.left=e.clientX+'px';glow.style.top=e.clientY+'px'});
 }
+
+
+const menuToggle=document.getElementById('menuToggle');
+const mobileMenu=document.getElementById('mobileMenu');
+if(menuToggle && mobileMenu){
+  menuToggle.addEventListener('click',()=>{
+    const open=mobileMenu.classList.toggle('open');
+    menuToggle.classList.toggle('active',open);
+    menuToggle.setAttribute('aria-expanded',String(open));
+    document.body.style.overflow=open?'hidden':'';
+  });
+  mobileMenu.querySelectorAll('a').forEach(link=>{
+    link.addEventListener('click',()=>{
+      mobileMenu.classList.remove('open');
+      menuToggle.classList.remove('active');
+      menuToggle.setAttribute('aria-expanded','false');
+      document.body.style.overflow='';
+    });
+  });
+}
