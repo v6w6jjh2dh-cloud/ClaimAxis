@@ -1,40 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Get Leads | ClaimAxis</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body class="inner">
-  <div class="page-noise"></div>
-  <header class="site-header">
-    <div class="container nav">
-      <a href="index.html" class="brand"><span class="brand-symbol">CA</span><span class="brand-word">Claim<span>Axis</span></span></a>
-      <div class="nav-actions"><a href="case-review.html" class="pill-btn">I Was Injured</a></div>
-    </div>
-  </header>
+  <div class="noise"></div>
+  <header class="header"><div class="container nav">
+    <a class="brand" href="index.html"><span class="brand-mark">CA</span><span class="brand-name">Claim<span>Axis</span></span></a>
+    <div class="nav-actions"><a class="pill" href="case-review.html">I Was Injured</a></div>
+  </div></header>
 
-  <main class="lead-page-v3">
-    <section class="lead-hero-v3">
-      <div class="lead-glow"></div>
+  <main class="lead-page">
+    <section class="lead-hero">
+      <div class="lead-orb"></div>
       <div class="container lead-layout">
         <div class="lead-copy reveal">
           <span class="eyebrow">FOR LAW FIRMS</span>
           <h1>Grow your practice with qualified injury leads.</h1>
-          <p>Tell us where you practice, which case types you want, and the monthly volume your firm can handle.</p>
-
-          <div class="benefit-list">
+          <p>Tell us where you practice, which case types you want, and the monthly volume your firm is prepared to handle.</p>
+          <div class="benefits">
             <div><span>✓</span> Target states and cities</div>
             <div><span>✓</span> Exclusive or shared leads</div>
             <div><span>✓</span> Practice-area filtering</div>
             <div><span>✓</span> Volume-based partnerships</div>
           </div>
-
-          <div class="contact-card">
+          <div class="direct-contact">
             <small>BUSINESS DEVELOPMENT</small>
             <strong>Prefer a direct conversation?</strong>
             <a href="mailto:claimaxis.business@gmail.com">claimaxis.business@gmail.com</a>
@@ -42,7 +38,7 @@
         </div>
 
         <div class="form-panel reveal delay-1">
-          <div class="form-kicker">PARTNERSHIP REQUEST</div>
+          <span class="form-kicker">PARTNERSHIP REQUEST</span>
           <h2>Request lead access</h2>
           <form id="firmForm">
             <div class="form-grid">
@@ -51,71 +47,27 @@
               <label>Business email<input type="email" name="email" required></label>
               <label>Phone number<input type="tel" name="phone" required></label>
             </div>
-
-            <label>States or cities served
-              <input type="text" name="territory" placeholder="Example: Texas — Dallas, Houston, Austin" required>
-            </label>
-
+            <label>States or cities served<input type="text" name="territory" placeholder="Example: Texas — Dallas, Houston, Austin" required></label>
             <label>Primary practice area
               <select name="practice_area" required>
-                <option value="">Select one</option>
-                <option>Car Accidents</option>
-                <option>Truck Accidents</option>
-                <option>Motorcycle Accidents</option>
-                <option>Rideshare Accidents</option>
-                <option>Premises Liability</option>
-                <option>Multiple Practice Areas</option>
+                <option value="">Select one</option><option>Car Accidents</option><option>Truck Accidents</option>
+                <option>Motorcycle Accidents</option><option>Rideshare Accidents</option><option>Premises Liability</option><option>Multiple Practice Areas</option>
               </select>
             </label>
-
             <div class="form-grid">
-              <label>Preferred lead type
-                <select name="lead_type" required>
-                  <option value="">Select one</option>
-                  <option>Exclusive</option>
-                  <option>Shared</option>
-                  <option>Open to both</option>
-                </select>
-              </label>
-              <label>Monthly lead volume
-                <select name="volume" required>
-                  <option value="">Select one</option>
-                  <option>10–25</option>
-                  <option>25–50</option>
-                  <option>50–100</option>
-                  <option>100+</option>
-                </select>
-              </label>
+              <label>Preferred lead type<select name="lead_type" required><option value="">Select one</option><option>Exclusive</option><option>Shared</option><option>Open to both</option></select></label>
+              <label>Monthly lead volume<select name="volume" required><option value="">Select one</option><option>10–25</option><option>25–50</option><option>50–100</option><option>100+</option></select></label>
             </div>
-
-            <label>Estimated monthly budget
-              <select name="budget" required>
-                <option value="">Select one</option>
-                <option>Under $5,000</option>
-                <option>$5,000–$10,000</option>
-                <option>$10,000–$25,000</option>
-                <option>$25,000+</option>
-              </select>
-            </label>
-
-            <label>Tell us about your intake goals
-              <textarea name="message" rows="5" placeholder="Which markets and case types matter most to your firm?"></textarea>
-            </label>
-
+            <label>Estimated monthly budget<select name="budget" required><option value="">Select one</option><option>Under $5,000</option><option>$5,000–$10,000</option><option>$10,000–$25,000</option><option>$25,000+</option></select></label>
+            <label>Tell us about your intake goals<textarea name="message" rows="5" placeholder="Which markets and case types matter most to your firm?"></textarea></label>
             <button class="btn gold full" type="submit">Schedule a Partnership Call</button>
             <p class="fine-print">Submitting this form does not create a contractual relationship. Any partnership must be documented and reviewed for compliance.</p>
           </form>
-
-          <div class="success-box" id="firmSuccess">
-            <div>✓</div>
-            <h3>Partnership request received.</h3>
-            <p>A ClaimAxis business development specialist may contact your firm shortly.</p>
-          </div>
+          <div class="success-box" id="firmSuccess"><div>✓</div><h3>Partnership request received.</h3><p>A ClaimAxis business development specialist may contact your firm shortly.</p></div>
         </div>
       </div>
     </section>
   </main>
-  <script src="forms.js"></script>
-  <script src="main.js"></script>
+  <script src="forms.js"></script><script src="main.js"></script>
 </body>
 </html>
