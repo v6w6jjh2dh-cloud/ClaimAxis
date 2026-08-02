@@ -1,15 +1,11 @@
-CLAIMAXIS V6
+CLAIMAXIS V7
 ==============
-New:
-- SaaS-style Command Center section
-- Animated demo activity feed
-- Enhanced dashboard preview
-- Premium logo treatment
-- Better Get Leads CRM presentation
-- Improved footer
-- Motion background effects
-- Mobile optimized
+Identity and hero refinement:
+- Custom premium monogram logo
+- Stronger ClaimAxis wordmark lockup
+- New luxury hero typography
+- Serif headline treatment
+- Smaller, more persuasive headline structure
+- Improved mobile hierarchy
 
-Important:
-All dashboard numbers and activity items are clearly presented as demo/sample data.
 Forms are still visual demos and do not yet send or save information.
