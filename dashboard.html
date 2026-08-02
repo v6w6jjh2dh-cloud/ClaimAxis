@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Demo | ClaimAxis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body class="dashboard">
+  <aside class="sidebar">
+    <a href="index.html" class="brand"><span class="brand-symbol">CA</span><span class="brand-word">Claim<span>Axis</span></span></a>
+    <nav>
+      <a class="active">Overview</a>
+      <a>New Leads</a>
+      <a>Assigned</a>
+      <a>Signed</a>
+      <a>Closed</a>
+      <a>Law Firms</a>
+      <a>Settings</a>
+    </nav>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-header">
+      <div><small>CLAIMAXIS PLATFORM</small><h1>Lead Dashboard</h1></div>
+      <a href="index.html" class="btn gold">Back to Website</a>
+    </header>
+
+    <section class="dash-stats">
+      <article><small>New Leads</small><strong>18</strong><span>+12% this week</span></article>
+      <article><small>Qualified</small><strong>11</strong><span>61% conversion</span></article>
+      <article><small>Assigned</small><strong>7</strong><span>4 awaiting review</span></article>
+      <article><small>Signed</small><strong>3</strong><span>Current month</span></article>
+    </section>
+
+    <section class="dash-content">
+      <div class="activity-card">
+        <div class="dash-card-head"><div><small>LEAD ACTIVITY</small><h2>Performance overview</h2></div><span>Last 7 days</span></div>
+        <div class="big-chart">
+          <i style="height:35%"></i><i style="height:52%"></i><i style="height:47%"></i><i style="height:75%"></i><i style="height:64%"></i><i style="height:90%"></i><i style="height:82%"></i>
+        </div>
+      </div>
+
+      <div class="territory-card">
+        <div class="dash-card-head"><div><small>TOP MARKETS</small><h2>By location</h2></div></div>
+        <div class="territory-list">
+          <div><span>Texas</span><strong>42%</strong></div>
+          <div><span>Florida</span><strong>24%</strong></div>
+          <div><span>California</span><strong>18%</strong></div>
+          <div><span>Other</span><strong>16%</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="lead-card">
+      <div class="dash-card-head"><div><small>RECENT LEADS</small><h2>Latest activity</h2></div><button>Filter</button></div>
+      <div class="dash-table">
+        <div class="dash-row head"><span>Lead</span><span>Location</span><span>Case Type</span><span>Status</span><span>Received</span></div>
+        <div class="dash-row"><span>Michael R.</span><span>Dallas, TX</span><span>Car Accident</span><span><b class="status blue">New</b></span><span>2 min ago</span></div>
+        <div class="dash-row"><span>Sandra K.</span><span>Houston, TX</span><span>Truck Accident</span><span><b class="status gold">Assigned</b></span><span>18 min ago</span></div>
+        <div class="dash-row"><span>James T.</span><span>Austin, TX</span><span>Rideshare</span><span><b class="status green">Signed</b></span><span>1 hr ago</span></div>
+        <div class="dash-row"><span>Linda P.</span><span>San Antonio, TX</span><span>Pedestrian</span><span><b class="status purple">Review</b></span><span>2 hrs ago</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
