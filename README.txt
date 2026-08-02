@@ -1,12 +1,15 @@
-CLAIMAXIS V5
+CLAIMAXIS V6
 ==============
-Mobile-first improvements:
-- Hamburger menu
-- Fixed mobile navigation
-- Better hero spacing
-- Dashboard preview optimized for iPhone
-- Improved mobile buttons
-- Cleaner mobile typography
-- Flat file structure ready for GitHub and Cloudflare Pages
+New:
+- SaaS-style Command Center section
+- Animated demo activity feed
+- Enhanced dashboard preview
+- Premium logo treatment
+- Better Get Leads CRM presentation
+- Improved footer
+- Motion background effects
+- Mobile optimized
 
-Forms are still visual demos and do not yet send or save data.
+Important:
+All dashboard numbers and activity items are clearly presented as demo/sample data.
+Forms are still visual demos and do not yet send or save information.

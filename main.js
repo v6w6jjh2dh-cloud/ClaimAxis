@@ -42,3 +42,27 @@ if(menuToggle && mobileMenu){
     });
   });
 }
+
+
+const feedItems=[...document.querySelectorAll('.feed-item')];
+if(feedItems.length){
+  let activeFeed=0;
+  setInterval(()=>{
+    feedItems[activeFeed].classList.remove('active');
+    activeFeed=(activeFeed+1)%feedItems.length;
+    feedItems[activeFeed].classList.add('active');
+  },2200);
+}
+
+const preview=document.querySelector('.dashboard-preview-v6');
+if(preview && window.matchMedia('(min-width:901px)').matches){
+  preview.addEventListener('pointermove',e=>{
+    const r=preview.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    preview.style.transform=`perspective(1200px) rotateY(${x*7-4}deg) rotateX(${-y*5+1}deg) translateY(-2px)`;
+  });
+  preview.addEventListener('pointerleave',()=>{
+    preview.style.transform='perspective(1200px) rotateY(-5deg) rotateX(1deg)';
+  });
+}
