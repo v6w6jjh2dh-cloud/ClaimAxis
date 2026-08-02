@@ -1,0 +1,82 @@
+CLAIMAXIS + CLOUDFLARE D1 — خطوات التشغيل
+==========================================
+
+الموجود في هذه النسخة
+---------------------
+1) استبيان العميل يرسل إلى POST /api/leads
+2) البيانات تُحفظ في D1
+3) نموذج المحامين يرسل إلى POST /api/firm-requests
+4) Dashboard حقيقي يقرأ البيانات من GET /api/leads
+5) يمكن تغيير حالة العميل وإضافة ملاحظات واسم مكتب المحاماة
+6) لوحة التحكم محمية برمز ADMIN_TOKEN
+
+الخطوة 1: ارفع الملفات إلى GitHub
+----------------------------------
+ارفع كل الملفات والمجلدات الموجودة في هذه الحزمة إلى جذر مستودع ClaimAxis.
+مهم جدًا: ارفع مجلد functions كاملًا كما هو.
+
+الخطوة 2: أنشئ قاعدة D1
+------------------------
+من Cloudflare:
+Storage & Databases > D1 SQL Database > Create database
+الاسم المقترح:
+claimaxis-db
+
+الخطوة 3: أنشئ الجداول
+-----------------------
+افتح قاعدة claimaxis-db ثم Console.
+انسخ كامل محتوى ملف schema.sql والصقه في SQL Console ثم Execute.
+
+الخطوة 4: اربط قاعدة البيانات بمشروع Pages
+-------------------------------------------
+Cloudflare > Workers & Pages > claimaxis > Settings > Bindings
+Add binding > D1 database
+
+Variable name / Binding name:
+DB
+
+اختر قاعدة:
+claimaxis-db
+
+احفظ الربط للـ Production، ويفضل Preview أيضًا.
+
+الخطوة 5: أضف رمز حماية للوحة التحكم
+-------------------------------------
+داخل مشروع Pages:
+Settings > Variables and Secrets > Add
+
+Type:
+Secret
+
+Variable name:
+ADMIN_TOKEN
+
+القيمة:
+اختر رمزًا قويًا طويلًا لا تستخدمه في أي حساب آخر.
+مثال فقط وليس للاستخدام:
+CA-Admin-9H7x-Change-Me-2026
+
+أضفه إلى Production وPreview.
+
+الخطوة 6: أعد النشر
+-------------------
+بعد إضافة Binding وSecret:
+Deployments > آخر Deployment > Retry deployment
+أو ارفع تعديلًا بسيطًا إلى GitHub لبدء نشر جديد.
+
+الخطوة 7: الاختبار
+------------------
+1) افتح case-review.html واملأ استبيانًا تجريبيًا.
+2) يجب أن يظهر رقم مرجعي مثل L-XXXXXXXXXXXX.
+3) افتح:
+https://claimaxis.com/dashboard.html
+4) أدخل قيمة ADMIN_TOKEN.
+5) سيظهر العميل الحقيقي داخل لوحة التحكم.
+
+مهم أمنيًا وقانونيًا
+--------------------
+- لا تشارك ADMIN_TOKEN.
+- لوحة التحكم الحالية مناسبة للاختبار الأولي، وليست نظام دخول متعدد المستخدمين.
+- قبل إطلاق إعلانات واسعة، أضف Cloudflare Turnstile وسياسة خصوصية وموافقة اتصال تمت مراجعتها.
+- لا تجمع أرقام الضمان الاجتماعي أو بيانات طبية حساسة أكثر من اللازم في هذه المرحلة.
+- يفضل لاحقًا حماية dashboard.html بواسطة Cloudflare Access.

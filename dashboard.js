@@ -1,0 +1,202 @@
+const loginOverlay=document.getElementById('adminLogin');
+const loginForm=document.getElementById('loginForm');
+const tokenInput=document.getElementById('adminTokenInput');
+const sidebar=document.getElementById('sidebar');
+const dashboardMain=document.getElementById('dashboardMain');
+const leadTable=document.getElementById('leadTable');
+const message=document.getElementById('dashboardMessage');
+const searchInput=document.getElementById('searchInput');
+const refreshBtn=document.getElementById('refreshBtn');
+const logoutBtn=document.getElementById('logoutBtn');
+const modal=document.getElementById('leadModal');
+const modalContent=document.getElementById('leadModalContent');
+let currentFilter='all';
+let searchTimer;
+
+function token(){return sessionStorage.getItem('claimaxis_admin_token')||''}
+function authHeaders(){return {'authorization':`Bearer ${token()}`,'content-type':'application/json'}}
+
+function showDashboard(){
+  loginOverlay.style.display='none';
+  sidebar.style.display='';
+  dashboardMain.style.display='';
+}
+function showLogin(){
+  loginOverlay.style.display='grid';
+  sidebar.style.display='none';
+  dashboardMain.style.display='none';
+}
+
+function escapeHtml(value=''){
+  return String(value).replace(/[&<>"']/g,ch=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  })[ch]);
+}
+function prettyStatus(status){
+  return {
+    new:'New',contacted:'Contacted',qualified:'Qualified',
+    sent_to_firm:'Sent to Firm',signed:'Signed',
+    closed:'Closed',rejected:'Rejected'
+  }[status]||status;
+}
+function prettyDate(value){
+  if(!value)return '';
+  const d=new Date(value.replace(' ','T')+'Z');
+  return Number.isNaN(d.getTime())?value:d.toLocaleString();
+}
+function statusClass(status){
+  if(status==='new')return 'blue';
+  if(status==='qualified'||status==='signed')return 'green';
+  if(status==='contacted'||status==='sent_to_firm')return 'gold';
+  return 'purple';
+}
+
+async function api(url,options={}){
+  const response=await fetch(url,{...options,headers:{...authHeaders(),...(options.headers||{})}});
+  const data=await response.json().catch(()=>({}));
+  if(response.status===401){
+    sessionStorage.removeItem('claimaxis_admin_token');
+    showLogin();
+    throw new Error('Invalid admin token.');
+  }
+  if(!response.ok||!data.ok)throw new Error(data.error||'Request failed.');
+  return data;
+}
+
+async function loadLeads(){
+  message.textContent='Loading leads…';
+  const params=new URLSearchParams({status:currentFilter,limit:'250'});
+  const q=searchInput.value.trim();
+  if(q)params.set('search',q);
+
+  try{
+    const data=await api(`/api/leads?${params}`);
+    renderCounts(data.counts||{});
+    renderLeads(data.leads||[]);
+    message.textContent=data.leads?.length?'':'No leads found.';
+  }catch(error){
+    message.textContent=error.message;
+  }
+}
+function renderCounts(c){
+  document.getElementById('countAll').textContent=c.all||0;
+  document.getElementById('countNew').textContent=c.new||0;
+  document.getElementById('countQualified').textContent=c.qualified||0;
+  document.getElementById('countSigned').textContent=c.signed||0;
+}
+function renderLeads(leads){
+  leadTable.querySelectorAll('.dash-row:not(.head)').forEach(row=>row.remove());
+  for(const lead of leads){
+    const row=document.createElement('button');
+    row.className='dash-row lead-row-button';
+    row.dataset.id=lead.public_id;
+    row.innerHTML=`
+      <span><strong>${escapeHtml(lead.full_name)}</strong><small>${escapeHtml(lead.public_id)}</small></span>
+      <span>${escapeHtml(lead.state||'—')}</span>
+      <span>${escapeHtml(lead.incident_type||'—')}</span>
+      <span><b class="status ${statusClass(lead.status)}">${escapeHtml(prettyStatus(lead.status))}</b></span>
+      <span>${escapeHtml(prettyDate(lead.created_at))}</span>
+    `;
+    row.addEventListener('click',()=>openLead(lead.public_id));
+    leadTable.appendChild(row);
+  }
+}
+
+async function openLead(id){
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  modalContent.innerHTML='<p>Loading lead…</p>';
+  try{
+    const data=await api(`/api/leads/${encodeURIComponent(id)}`);
+    const l=data.lead;
+    modalContent.innerHTML=`
+      <span class="eyebrow">LEAD DETAILS</span>
+      <h2>${escapeHtml(l.full_name)}</h2>
+      <p class="lead-reference">${escapeHtml(l.public_id)} · ${escapeHtml(prettyDate(l.created_at))}</p>
+
+      <div class="lead-detail-grid">
+        <div><small>Phone</small><a href="tel:${escapeHtml(l.phone)}">${escapeHtml(l.phone)}</a></div>
+        <div><small>Email</small><a href="mailto:${escapeHtml(l.email)}">${escapeHtml(l.email)}</a></div>
+        <div><small>State</small><strong>${escapeHtml(l.state||'—')}</strong></div>
+        <div><small>Incident</small><strong>${escapeHtml(l.incident_type||'—')}</strong></div>
+        <div><small>Accident Date</small><strong>${escapeHtml(l.accident_date||'—')}</strong></div>
+        <div><small>Treatment</small><strong>${escapeHtml(l.treatment||'—')}</strong></div>
+        <div><small>Has Attorney</small><strong>${escapeHtml(l.has_attorney||'—')}</strong></div>
+        <div><small>Fault</small><strong>${escapeHtml(l.fault||'—')}</strong></div>
+      </div>
+
+      <div class="lead-long-text"><small>Injuries</small><p>${escapeHtml(l.injuries||'—')}</p></div>
+      <div class="lead-long-text"><small>Description</small><p>${escapeHtml(l.description||'—')}</p></div>
+
+      <form id="leadUpdateForm" class="lead-update-form">
+        <label>Status
+          <select name="status">
+            ${['new','contacted','qualified','sent_to_firm','signed','closed','rejected']
+              .map(s=>`<option value="${s}" ${s===l.status?'selected':''}>${prettyStatus(s)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Assigned firm
+          <input name="assigned_firm" value="${escapeHtml(l.assigned_firm||'')}">
+        </label>
+        <label>Internal notes
+          <textarea name="notes" rows="5">${escapeHtml(l.notes||'')}</textarea>
+        </label>
+        <button class="btn gold full" type="submit">Save Changes</button>
+      </form>
+      <div id="modalMessage"></div>
+    `;
+    document.getElementById('leadUpdateForm').addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const msg=document.getElementById('modalMessage');
+      const payload=Object.fromEntries(new FormData(e.currentTarget).entries());
+      msg.textContent='Saving…';
+      try{
+        await api(`/api/leads/${encodeURIComponent(id)}`,{
+          method:'PATCH',
+          body:JSON.stringify(payload)
+        });
+        msg.textContent='Changes saved.';
+        await loadLeads();
+      }catch(error){msg.textContent=error.message}
+    });
+  }catch(error){
+    modalContent.innerHTML=`<p>${escapeHtml(error.message)}</p>`;
+  }
+}
+function closeModal(){
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+}
+document.querySelectorAll('[data-close-modal]').forEach(el=>el.addEventListener('click',closeModal));
+
+loginForm.addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  sessionStorage.setItem('claimaxis_admin_token',tokenInput.value);
+  showDashboard();
+  await loadLeads();
+});
+logoutBtn.addEventListener('click',()=>{
+  sessionStorage.removeItem('claimaxis_admin_token');
+  showLogin();
+});
+refreshBtn.addEventListener('click',loadLeads);
+searchInput.addEventListener('input',()=>{
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(loadLeads,350);
+});
+document.querySelectorAll('.sidebar nav button').forEach(button=>{
+  button.addEventListener('click',()=>{
+    document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
+    button.classList.add('active');
+    currentFilter=button.dataset.filter;
+    document.getElementById('listTitle').textContent=button.textContent;
+    loadLeads();
+  });
+});
+
+if(token()){
+  showDashboard();
+  loadLeads();
+}else{
+  showLogin();
+}
