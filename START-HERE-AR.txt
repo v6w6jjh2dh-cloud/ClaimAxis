@@ -1,0 +1,114 @@
+CLAIMAXIS ENTERPRISE V1 — الخطوات من وضعك الحالي
+=================================================
+
+أنت عندك قاعدة claimaxis-db والجداول القديمة:
+- leads
+- law_firms
+- lead_notes
+
+هذه الجداول لا تطابق النظام الجديد.
+
+الخطوة 1 — إصلاح قاعدة البيانات
+--------------------------------
+افتح:
+Cloudflare > D1 > claimaxis-db > Console
+
+انسخ كامل محتوى الملف:
+MIGRATE-CURRENT-DATABASE.sql
+
+الصقه في Console واضغط Execute مرة واحدة.
+
+تنبيه:
+هذا يحذف الجداول التجريبية القديمة فقط. بما أن القاعدة جديدة ولا يوجد فيها عملاء حقيقيون، هذا هو الحل الأنظف.
+
+بعدها اكتب:
+/tables
+
+يجب أن ترى:
+- leads
+- firm_requests
+- lead_events
+- sqlite_sequence
+
+الخطوة 2 — رفع ملفات المشروع
+------------------------------
+ارفع كل محتويات هذه الحزمة إلى GitHub.
+مهم جدًا أن يظهر داخل المستودع:
+functions/
+  _lib/
+    utils.js
+  api/
+    leads.js
+    health.js
+    firm-requests.js
+    leads/
+      [id].js
+    firm-requests/
+      [id].js
+
+لا ترفع ملفات functions بشكل مسطح في الجذر.
+يجب الحفاظ على نفس المجلدات.
+
+الخطوة 3 — ربط D1
+------------------
+Cloudflare > Workers & Pages > claimaxis > Settings > Bindings
+Add > D1 database
+
+Binding name:
+DB
+
+Database:
+claimaxis-db
+
+احفظه للـ Production.
+
+الخطوة 4 — إضافة رمز الإدارة
+------------------------------
+Settings > Variables and Secrets > Add
+
+الاسم:
+ADMIN_TOKEN
+
+النوع:
+Secret
+
+القيمة:
+اكتب رمزًا طويلًا قويًا واحفظه عندك.
+
+الخطوة 5 — إعادة النشر
+-----------------------
+Deployments > آخر نشر > Retry deployment
+أو ارفع أي تعديل صغير إلى GitHub.
+
+الخطوة 6 — فحص النظام
+----------------------
+افتح:
+https://claimaxis.com/api/health
+
+النتيجة الصحيحة:
+{
+  "ok": true,
+  "database": true,
+  "schema_ready": true
+}
+
+الخطوة 7 — التجربة
+-------------------
+1) افتح:
+https://claimaxis.com/case-review.html
+
+2) عبئ الاستبيان التجريبي.
+
+3) افتح:
+https://claimaxis.com/dashboard.html
+
+4) أدخل ADMIN_TOKEN.
+
+يجب أن يظهر العميل في لوحة التحكم.
+
+ملاحظات مهمة
+-------------
+- لا تشارك ADMIN_TOKEN.
+- النظام الحالي مناسب لأول Test مضبوط.
+- قبل الإعلان الواسع سنضيف Turnstile وCloudflare Access.
+- لا تستخدم بيانات عميل حقيقي قبل تجربة كاملة ببيانات وهمية.

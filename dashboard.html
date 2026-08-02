@@ -34,7 +34,7 @@
       <button data-filter="qualified">Qualified</button>
       <button data-filter="sent_to_firm">Sent to Firm</button>
       <button data-filter="signed">Signed</button>
-      <button data-filter="closed">Closed</button>
+      <button data-filter="closed">Closed</button><button id="firmRequestsTab" type="button">Firm Requests</button>
     </nav>
     <button class="sidebar-logout" id="logoutBtn">Log out</button>
   </aside>
@@ -52,7 +52,7 @@
       <article><small>Signed</small><strong id="countSigned">0</strong><span>Converted leads</span></article>
     </section>
 
-    <section class="lead-card real-lead-card">
+    <section class="lead-card real-lead-card" id="leadSection">
       <div class="dash-card-head">
         <div><small>LIVE DATABASE</small><h2 id="listTitle">All Leads</h2></div>
         <div class="lead-tools">
@@ -62,6 +62,16 @@
       <div class="dashboard-message" id="dashboardMessage"></div>
       <div class="dash-table" id="leadTable">
         <div class="dash-row head"><span>Lead</span><span>Location</span><span>Case Type</span><span>Status</span><span>Received</span></div>
+      </div>
+    </section>
+    <section class="lead-card real-lead-card" id="firmSection" style="display:none">
+      <div class="dash-card-head">
+        <div><small>LAW FIRM PIPELINE</small><h2>Partnership Requests</h2></div>
+        <button class="btn gold" id="refreshFirmsBtn" type="button">Refresh</button>
+      </div>
+      <div class="dashboard-message" id="firmMessage"></div>
+      <div class="dash-table" id="firmTable">
+        <div class="dash-row head"><span>Firm</span><span>Territory</span><span>Practice Area</span><span>Status</span><span>Received</span></div>
       </div>
     </section>
   </main>

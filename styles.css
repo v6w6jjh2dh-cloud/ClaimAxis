@@ -900,3 +900,20 @@ button:disabled{opacity:.65;cursor:wait}
   .lead-tools input{width:100%}
   .dash-card-head{display:grid;gap:14px}
 }
+
+/* Enterprise V1 */
+.health-check-note{
+  padding:14px 16px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.025);
+  color:#8da1b5;
+}
+#firmTable .dash-row span:first-child strong,
+#firmTable .dash-row span:first-child small{
+  display:block;
+}
+#firmTable .dash-row span:first-child small{
+  color:#72869a;
+  font-size:.68rem;
+}

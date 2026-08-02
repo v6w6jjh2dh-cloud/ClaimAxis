@@ -200,3 +200,52 @@ if(token()){
 }else{
   showLogin();
 }
+
+
+const firmRequestsTab=document.getElementById('firmRequestsTab');
+const firmSection=document.getElementById('firmSection');
+const leadSection=document.getElementById('leadSection');
+const firmTable=document.getElementById('firmTable');
+const firmMessage=document.getElementById('firmMessage');
+const refreshFirmsBtn=document.getElementById('refreshFirmsBtn');
+
+async function loadFirmRequests(){
+  firmMessage.textContent='Loading firm requests…';
+  try{
+    const data=await api('/api/firm-requests');
+    firmTable.querySelectorAll('.dash-row:not(.head)').forEach(row=>row.remove());
+    for(const item of data.requests||[]){
+      const row=document.createElement('div');
+      row.className='dash-row';
+      row.innerHTML=`
+        <span><strong>${escapeHtml(item.firm_name)}</strong><small>${escapeHtml(item.contact_name||'')}</small></span>
+        <span>${escapeHtml(item.territory||'—')}</span>
+        <span>${escapeHtml(item.practice_area||'—')}</span>
+        <span><b class="status ${statusClass(item.status)}">${escapeHtml(prettyStatus(item.status))}</b></span>
+        <span>${escapeHtml(prettyDate(item.created_at))}</span>
+      `;
+      firmTable.appendChild(row);
+    }
+    firmMessage.textContent=(data.requests||[]).length?'':'No firm requests found.';
+  }catch(error){
+    firmMessage.textContent=error.message;
+  }
+}
+
+if(firmRequestsTab){
+  firmRequestsTab.addEventListener('click',()=>{
+    document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
+    firmRequestsTab.classList.add('active');
+    leadSection.style.display='none';
+    firmSection.style.display='';
+    loadFirmRequests();
+  });
+}
+if(refreshFirmsBtn) refreshFirmsBtn.addEventListener('click',loadFirmRequests);
+
+document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
+  button.addEventListener('click',()=>{
+    if(leadSection) leadSection.style.display='';
+    if(firmSection) firmSection.style.display='none';
+  });
+});

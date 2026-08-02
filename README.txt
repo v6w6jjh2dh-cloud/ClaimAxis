@@ -1,21 +1,18 @@
-CLAIMAXIS D1 — PHASE 2
-======================
+CLAIMAXIS ENTERPRISE V1
 
-This package upgrades ClaimAxis from static demo forms to a working Cloudflare Pages + D1 application.
+Includes:
+- Working Cloudflare Pages Functions API
+- D1 lead storage
+- Lead status workflow
+- Law firm partnership request storage
+- Admin dashboard
+- Firm requests view
+- Health endpoint: /api/health
+- Migration for the user's current old D1 schema
+- Arabic setup guide
 
-Core routes:
-- POST /api/leads
-- GET /api/leads (admin token required)
-- GET /api/leads/:id (admin token required)
-- PATCH /api/leads/:id (admin token required)
-- POST /api/firm-requests
-- GET /api/firm-requests (admin token required)
-
-Required Cloudflare bindings:
-- D1 binding name: DB
+Required:
+- D1 binding: DB
 - Secret: ADMIN_TOKEN
 
-Read SETUP-D1-AR.txt for mobile-friendly setup instructions.
-
-Security note:
-The token-based dashboard is suitable for an initial controlled test. Before broader production use, protect the dashboard with Cloudflare Access and add Turnstile/rate limiting.
+Start with START-HERE-AR.txt.
