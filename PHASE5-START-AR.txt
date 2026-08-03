@@ -1,0 +1,12 @@
+CLAIMAXIS PHASE 5 — قبول/رفض المكتب
+
+1) افتح Cloudflare > D1 > claimaxis-db > Console.
+2) انسخ محتوى PHASE5-MIGRATION.sql واضغط Execute مرة واحدة.
+3) ارفع جميع الملفات إلى GitHub واستبدل القديمة.
+4) انتظر Deployment أخضر.
+5) أرسل Lead لمكتب تجريبي.
+6) الإيميل سيحتوي زر Review and Respond.
+7) افتح الزر واختر Accept Lead أو Decline Lead.
+8) افتح Lead في Dashboard وسترى Law Firm Response.
+
+الرابط آمن ومخصص للإرسال الحالي. عند إعادة إرسال نفس Lead، يصبح الرابط القديم غير صالح.

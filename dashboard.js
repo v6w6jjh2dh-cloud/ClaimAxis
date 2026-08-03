@@ -134,6 +134,7 @@ async function openLead(id){
 
       <div class="lead-long-text"><small>Injuries</small><p>${escapeHtml(l.injuries||'—')}</p></div>
       <div class="lead-long-text"><small>Description</small><p>${escapeHtml(l.description||'—')}</p></div>
+      <div class="lead-long-text"><small>Law Firm Response</small><p><strong>${escapeHtml(l.firm_response||'Not sent / pending')}</strong>${l.firm_response_at ? ' · '+escapeHtml(prettyDate(l.firm_response_at)) : ''}</p></div>
 
       <form id="leadUpdateForm" class="lead-update-form">
         <label>Status
