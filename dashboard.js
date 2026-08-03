@@ -295,16 +295,6 @@ document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
   });
 });
 
-if(token()){
-  showDashboard();
-  showLeadView('All Leads');
-  loadLeads();
-  loadAutoAssignmentSetting();
-}else{
-  showLogin();
-}
-
-
 const firmRequestsTab=document.getElementById('firmRequestsTab');
 const firmSection=document.getElementById('firmSection');
 const leadSection=document.getElementById('leadSection');
@@ -476,4 +466,14 @@ if(lawFirmForm){
       lawFirmFormMessage.textContent=error.message;
     }
   });
+}
+
+// Start only after every dashboard section constant and handler has been initialized.
+// This prevents an intermittent initialization crash that can leave the counters at zero.
+if(token()){
+  showDashboard();
+  showLeadView('All Leads');
+  Promise.all([loadLeads(),loadAutoAssignmentSetting()]);
+}else{
+  showLogin();
 }
