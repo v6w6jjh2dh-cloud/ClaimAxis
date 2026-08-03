@@ -35,8 +35,8 @@
       <button data-filter="sent_to_firm">Sent to Firm</button>
       <button data-filter="signed">Signed</button>
       <button data-filter="closed">Closed</button>
-      <button id="lawFirmsTab" type="button">Law Firms</button>
       <button id="firmRequestsTab" type="button">Firm Requests</button>
+      <button id="lawFirmsTab" type="button">Law Firms</button>
     </nav>
     <button class="sidebar-logout" id="logoutBtn">Log out</button>
   </aside>
@@ -66,23 +66,6 @@
         <div class="dash-row head"><span>Lead</span><span>Location</span><span>Case Type</span><span>Status</span><span>Received</span></div>
       </div>
     </section>
-    <section class="lead-card real-lead-card" id="lawFirmsSection" style="display:none">
-      <div class="dash-card-head">
-        <div><small>PARTNER NETWORK</small><h2>Law Firms</h2></div>
-        <div class="firm-actions">
-          <button class="btn ghost" id="refreshLawFirmsBtn" type="button">Refresh</button>
-          <button class="btn gold" id="addLawFirmBtn" type="button">+ Add Law Firm</button>
-        </div>
-      </div>
-      <div class="dashboard-message" id="lawFirmsMessage"></div>
-      <div class="empty-firms" id="emptyFirms" style="display:none">
-        <strong>No law firms added yet</strong>
-        <span>Your leads will stay with ClaimAxis until you add your first partner firm.</span>
-      </div>
-      <div class="dash-table" id="lawFirmsTable">
-        <div class="dash-row head law-firm-row"><span>Firm</span><span>Territory</span><span>Practice Areas</span><span>Capacity</span><span>Status</span></div>
-      </div>
-    </section>
     <section class="lead-card real-lead-card" id="firmSection" style="display:none">
       <div class="dash-card-head">
         <div><small>LAW FIRM PIPELINE</small><h2>Partnership Requests</h2></div>
@@ -91,6 +74,19 @@
       <div class="dashboard-message" id="firmMessage"></div>
       <div class="dash-table" id="firmTable">
         <div class="dash-row head"><span>Firm</span><span>Territory</span><span>Practice Area</span><span>Status</span><span>Received</span></div>
+      </div>
+    </section>
+    <section class="lead-card real-lead-card" id="lawFirmsSection" style="display:none">
+      <div class="dash-card-head">
+        <div><small>PARTNER NETWORK</small><h2>Law Firms</h2></div>
+        <div class="section-actions">
+          <button class="btn" id="refreshLawFirmsBtn" type="button">Refresh</button>
+          <button class="btn gold" id="addLawFirmBtn" type="button">Add Law Firm</button>
+        </div>
+      </div>
+      <div class="dashboard-message" id="lawFirmsMessage"></div>
+      <div class="dash-table" id="lawFirmsTable">
+        <div class="dash-row head"><span>Firm</span><span>Territory</span><span>Practice Areas</span><span>Daily Limit</span><span>Status</span></div>
       </div>
     </section>
   </main>
@@ -108,30 +104,53 @@
     <div class="lead-modal-backdrop" data-close-firm-modal></div>
     <div class="lead-modal-panel">
       <button class="modal-close" data-close-firm-modal>×</button>
-      <div id="lawFirmModalContent">
+      <div>
         <span class="eyebrow">PARTNER NETWORK</span>
         <h2 id="lawFirmModalTitle">Add Law Firm</h2>
-        <p class="lead-reference">You can add your first partner later. No lead is sent automatically.</p>
+        <p class="lead-reference">Add a real firm only when you are ready. No lead is sent automatically.</p>
         <form id="lawFirmForm" class="lead-update-form">
           <input type="hidden" name="id" id="lawFirmId">
-          <label>Firm name<input name="firm_name" required></label>
-          <label>Contact name<input name="contact_name" required></label>
+          <label>Firm name
+            <input name="firm_name" required maxlength="180" placeholder="Example Law Group">
+          </label>
+          <label>Contact name
+            <input name="contact_name" maxlength="120" placeholder="Primary contact">
+          </label>
           <div class="form-two-col">
-            <label>Email<input name="email" type="email" required></label>
-            <label>Phone<input name="phone" required></label>
+            <label>Email
+              <input name="email" type="email" maxlength="180" placeholder="partner@example.com">
+            </label>
+            <label>Phone
+              <input name="phone" maxlength="40" placeholder="+1 ...">
+            </label>
           </div>
           <div class="form-two-col">
-            <label>States / territory<input name="state" placeholder="New York, New Jersey"></label>
-            <label>City<input name="city" placeholder="New York"></label>
+            <label>State / territory
+              <input name="state" maxlength="500" placeholder="New York, New Jersey">
+            </label>
+            <label>City
+              <input name="city" maxlength="120" placeholder="New York">
+            </label>
           </div>
-          <label>Practice areas<textarea name="practice_areas" rows="3" placeholder="Motor vehicle accidents, premises liability"></textarea></label>
+          <label>Practice areas
+            <textarea name="practice_areas" rows="4" maxlength="1500" placeholder="Personal injury, car accidents, premises liability"></textarea>
+          </label>
           <div class="form-two-col">
-            <label>Daily lead limit<input name="max_daily_leads" type="number" min="1" max="500" value="10"></label>
-            <label>Status<select name="status"><option value="active">Active</option><option value="pending">Pending</option><option value="paused">Paused</option><option value="declined">Declined</option></select></label>
+            <label>Maximum daily leads
+              <input name="max_daily_leads" type="number" min="0" max="1000" value="10">
+            </label>
+            <label>Status
+              <select name="status">
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="paused">Paused</option>
+                <option value="declined">Declined</option>
+              </select>
+            </label>
           </div>
           <button class="btn gold full" type="submit">Save Law Firm</button>
+          <div id="lawFirmFormMessage" class="dashboard-message"></div>
         </form>
-        <div id="lawFirmFormMessage"></div>
       </div>
     </div>
   </div>

@@ -12,6 +12,7 @@ const modal=document.getElementById('leadModal');
 const modalContent=document.getElementById('leadModalContent');
 let currentFilter='all';
 let searchTimer;
+let lawFirmsCache=[];
 
 function token(){return sessionStorage.getItem('claimaxis_admin_token')||''}
 function authHeaders(){return {'authorization':`Bearer ${token()}`,'content-type':'application/json'}}
@@ -107,6 +108,9 @@ async function openLead(id){
   modal.setAttribute('aria-hidden','false');
   modalContent.innerHTML='<p>Loading lead…</p>';
   try{
+    if(!lawFirmsCache.length){
+      try{ const firms=await api('/api/law-firms'); lawFirmsCache=firms.firms||[]; }catch(_error){}
+    }
     const data=await api(`/api/leads/${encodeURIComponent(id)}`);
     const l=data.lead;
     modalContent.innerHTML=`
@@ -136,11 +140,10 @@ async function openLead(id){
           </select>
         </label>
         <label>Assigned firm
-          <select name="assigned_firm" id="assignedFirmSelect">
+          <select name="assigned_firm">
             <option value="">Not assigned</option>
             ${lawFirmsCache.filter(f=>f.status==='active').map(f=>`<option value="${escapeHtml(f.firm_name)}" ${f.firm_name===l.assigned_firm?'selected':''}>${escapeHtml(f.firm_name)}</option>`).join('')}
           </select>
-          ${lawFirmsCache.filter(f=>f.status==='active').length ? '' : '<small class="field-help">No active law firms yet. The lead will remain unassigned.</small>'}
         </label>
         <label>Internal notes
           <textarea name="notes" rows="5">${escapeHtml(l.notes||'')}</textarea>
@@ -240,7 +243,7 @@ if(firmRequestsTab){
   firmRequestsTab.addEventListener('click',()=>{
     document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
     firmRequestsTab.classList.add('active');
-    leadSection.style.display='none';
+    hideAllSections();
     firmSection.style.display='';
     loadFirmRequests();
   });
@@ -249,36 +252,32 @@ if(refreshFirmsBtn) refreshFirmsBtn.addEventListener('click',loadFirmRequests);
 
 document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
   button.addEventListener('click',()=>{
+    hideAllSections();
     if(leadSection) leadSection.style.display='';
-    if(firmSection) firmSection.style.display='none';
   });
 });
 
 
-// Phase 3 — Law Firm Management
+// Law firm management
 const lawFirmsTab=document.getElementById('lawFirmsTab');
 const lawFirmsSection=document.getElementById('lawFirmsSection');
 const lawFirmsTable=document.getElementById('lawFirmsTable');
 const lawFirmsMessage=document.getElementById('lawFirmsMessage');
-const emptyFirms=document.getElementById('emptyFirms');
-const addLawFirmBtn=document.getElementById('addLawFirmBtn');
 const refreshLawFirmsBtn=document.getElementById('refreshLawFirmsBtn');
+const addLawFirmBtn=document.getElementById('addLawFirmBtn');
 const lawFirmModal=document.getElementById('lawFirmModal');
 const lawFirmForm=document.getElementById('lawFirmForm');
+const lawFirmModalTitle=document.getElementById('lawFirmModalTitle');
 const lawFirmFormMessage=document.getElementById('lawFirmFormMessage');
-let lawFirmsCache=[];
 
-function showOnlySection(section){
-  if(leadSection) leadSection.style.display=section==='leads'?'':'none';
-  if(firmSection) firmSection.style.display=section==='requests'?'':'none';
-  if(lawFirmsSection) lawFirmsSection.style.display=section==='firms'?'':'none';
+function hideAllSections(){
+  if(leadSection) leadSection.style.display='none';
+  if(firmSection) firmSection.style.display='none';
+  if(lawFirmsSection) lawFirmsSection.style.display='none';
 }
 
-function firmStatusClass(status){
-  if(status==='active')return 'green';
-  if(status==='pending')return 'gold';
-  if(status==='paused')return 'purple';
-  return 'blue';
+function firmStatusLabel(status){
+  return {active:'Active',pending:'Pending',paused:'Paused',declined:'Declined'}[status]||status;
 }
 
 async function loadLawFirms(){
@@ -287,67 +286,79 @@ async function loadLawFirms(){
     const data=await api('/api/law-firms');
     lawFirmsCache=data.firms||[];
     lawFirmsTable.querySelectorAll('.dash-row:not(.head)').forEach(row=>row.remove());
-    emptyFirms.style.display=lawFirmsCache.length?'none':'grid';
     for(const firm of lawFirmsCache){
-      const row=document.createElement('button');
-      row.className='dash-row lead-row-button law-firm-row';
+      const row=document.createElement('div');
+      row.className='dash-row';
       row.innerHTML=`
-        <span><strong>${escapeHtml(firm.firm_name)}</strong><small>${escapeHtml(firm.contact_name||'')} · ${escapeHtml(firm.email||'')}</small></span>
+        <span><strong>${escapeHtml(firm.firm_name)}</strong><small>${escapeHtml(firm.contact_name||firm.email||'')}</small></span>
         <span>${escapeHtml([firm.city,firm.state].filter(Boolean).join(', ')||'—')}</span>
         <span>${escapeHtml(firm.practice_areas||'—')}</span>
-        <span>${escapeHtml(String(firm.max_daily_leads||10))}/day</span>
-        <span><b class="status ${firmStatusClass(firm.status)}">${escapeHtml(prettyStatus(firm.status))}</b></span>`;
+        <span>${escapeHtml(String(firm.max_daily_leads??0))}</span>
+        <span><b class="status ${statusClass(firm.status)}">${escapeHtml(firmStatusLabel(firm.status))}</b></span>
+      `;
       row.addEventListener('click',()=>openLawFirmModal(firm));
       lawFirmsTable.appendChild(row);
     }
-    lawFirmsMessage.textContent='';
-  }catch(error){lawFirmsMessage.textContent=error.message}
+    lawFirmsMessage.textContent=lawFirmsCache.length?'':'No law firms added yet.';
+  }catch(error){
+    lawFirmsMessage.textContent=error.message;
+  }
 }
 
 function openLawFirmModal(firm=null){
   lawFirmForm.reset();
-  lawFirmForm.elements.max_daily_leads.value='10';
-  lawFirmForm.elements.status.value='active';
   lawFirmFormMessage.textContent='';
-  document.getElementById('lawFirmModalTitle').textContent=firm?'Edit Law Firm':'Add Law Firm';
+  lawFirmModalTitle.textContent=firm?'Edit Law Firm':'Add Law Firm';
+  document.getElementById('lawFirmId').value=firm?.id||'';
   if(firm){
-    for(const key of ['id','firm_name','contact_name','email','phone','state','city','practice_areas','max_daily_leads','status']){
-      if(lawFirmForm.elements[key]) lawFirmForm.elements[key].value=firm[key]??'';
+    for(const [key,value] of Object.entries(firm)){
+      const field=lawFirmForm.elements.namedItem(key);
+      if(field) field.value=value??'';
     }
+  }else{
+    lawFirmForm.elements.namedItem('status').value='active';
+    lawFirmForm.elements.namedItem('max_daily_leads').value='10';
   }
   lawFirmModal.classList.add('open');
   lawFirmModal.setAttribute('aria-hidden','false');
 }
-function closeLawFirmModal(){lawFirmModal.classList.remove('open');lawFirmModal.setAttribute('aria-hidden','true')}
+
+function closeLawFirmModal(){
+  lawFirmModal.classList.remove('open');
+  lawFirmModal.setAttribute('aria-hidden','true');
+}
+
 document.querySelectorAll('[data-close-firm-modal]').forEach(el=>el.addEventListener('click',closeLawFirmModal));
+if(addLawFirmBtn) addLawFirmBtn.addEventListener('click',()=>openLawFirmModal());
+if(refreshLawFirmsBtn) refreshLawFirmsBtn.addEventListener('click',loadLawFirms);
+if(lawFirmsTab){
+  lawFirmsTab.addEventListener('click',()=>{
+    document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
+    lawFirmsTab.classList.add('active');
+    hideAllSections();
+    lawFirmsSection.style.display='';
+    loadLawFirms();
+  });
+}
 
-lawFirmForm?.addEventListener('submit',async(e)=>{
-  e.preventDefault();
-  const payload=Object.fromEntries(new FormData(lawFirmForm).entries());
-  const id=payload.id; delete payload.id;
-  lawFirmFormMessage.textContent='Saving…';
-  try{
-    await api(id?`/api/law-firms/${encodeURIComponent(id)}`:'/api/law-firms',{
-      method:id?'PATCH':'POST',
-      body:JSON.stringify(payload)
-    });
-    lawFirmFormMessage.textContent='Law firm saved.';
-    await loadLawFirms();
-    setTimeout(closeLawFirmModal,500);
-  }catch(error){lawFirmFormMessage.textContent=error.message}
-});
-
-lawFirmsTab?.addEventListener('click',()=>{
-  document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
-  lawFirmsTab.classList.add('active');
-  showOnlySection('firms');
-  loadLawFirms();
-});
-addLawFirmBtn?.addEventListener('click',()=>openLawFirmModal());
-refreshLawFirmsBtn?.addEventListener('click',loadLawFirms);
-
-// Keep navigation sections mutually exclusive.
-firmRequestsTab?.addEventListener('click',()=>showOnlySection('requests'));
-document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
-  button.addEventListener('click',()=>showOnlySection('leads'));
-});
+if(lawFirmForm){
+  lawFirmForm.addEventListener('submit',async(e)=>{
+    e.preventDefault();
+    const payload=Object.fromEntries(new FormData(lawFirmForm).entries());
+    const id=payload.id;
+    delete payload.id;
+    payload.max_daily_leads=Number(payload.max_daily_leads||0);
+    lawFirmFormMessage.textContent='Saving…';
+    try{
+      await api(id?`/api/law-firms/${encodeURIComponent(id)}`:'/api/law-firms',{
+        method:id?'PATCH':'POST',
+        body:JSON.stringify(payload)
+      });
+      lawFirmFormMessage.textContent='Law firm saved.';
+      await loadLawFirms();
+      setTimeout(closeLawFirmModal,450);
+    }catch(error){
+      lawFirmFormMessage.textContent=error.message;
+    }
+  });
+}
