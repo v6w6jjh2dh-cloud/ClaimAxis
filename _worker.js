@@ -229,7 +229,6 @@ async function getPlatformSetting(env, key, fallback = "") {
     const row = await env.DB.prepare(`SELECT value FROM platform_settings WHERE key = ? LIMIT 1`).bind(key).first();
     return row ? String(row.value) : fallback;
   } catch (error) {
-    console.warn("Platform settings table unavailable:", error);
     return fallback;
   }
 }
@@ -257,24 +256,17 @@ function firmMatchScore(lead, firm) {
   const leadType = normalizeMatchText(lead.incident_type);
   const practices = normalizeMatchText(firm.practice_areas);
   let score = 0;
-
   if (firmStates) {
     if (!leadState || !firmStates.includes(leadState)) return -1;
     score += 10;
-  } else {
-    score += 1;
   }
-
   if (practices) {
     const leadTokens = meaningfulTokens(leadType);
     const practiceTokens = new Set(meaningfulTokens(practices));
     const overlap = leadTokens.filter(token => practiceTokens.has(token)).length;
     if (leadTokens.length && overlap === 0 && !practices.includes(leadType)) return -1;
     score += Math.max(2, overlap * 3);
-  } else {
-    score += 1;
   }
-
   return score;
 }
 
@@ -283,34 +275,25 @@ async function findBestLawFirm(env, lead) {
     SELECT id, firm_name, contact_name, email, phone, state, city,
            practice_areas, max_daily_leads, status
     FROM law_firms
-    WHERE lower(status) = 'active'
-      AND email IS NOT NULL
-      AND trim(email) <> ''
+    WHERE lower(status) = 'active' AND email IS NOT NULL AND trim(email) <> ''
     ORDER BY id ASC
   `).all();
-
   const candidates = [];
   for (const firm of results || []) {
     if (!isEmail(firm.email)) continue;
     const score = firmMatchScore(lead, firm);
     if (score < 0) continue;
-
     const usage = await env.DB.prepare(`
-      SELECT COUNT(*) AS count
-      FROM leads
-      WHERE assigned_firm = ?
-        AND date(updated_at) = date('now')
+      SELECT COUNT(*) AS count FROM leads
+      WHERE assigned_firm = ? AND date(updated_at) = date('now')
         AND status IN ('sent_to_firm','contacted','signed')
     `).bind(firm.firm_name).first();
-
     const usedToday = Number(usage?.count || 0);
     const dailyLimit = Math.max(0, Number(firm.max_daily_leads || 0));
     if (dailyLimit > 0 && usedToday >= dailyLimit) continue;
-
     candidates.push({ ...firm, score, usedToday, dailyLimit });
   }
-
-  candidates.sort((a, b) => b.score - a.score || a.usedToday - b.usedToday || a.id - b.id);
+  candidates.sort((a,b) => b.score-a.score || a.usedToday-b.usedToday || a.id-b.id);
   return candidates[0] || null;
 }
 
@@ -318,68 +301,51 @@ async function deliverLeadToFirm(env, lead, firm, assignmentReason = "Manual ass
   const rawToken = randomToken();
   const tokenHash = await hash(rawToken);
   const responseUrl = `https://claimaxis.com/firm-response.html?token=${encodeURIComponent(rawToken)}`;
-  const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b;max-width:720px;margin:auto"><h2>New ClaimAxis Lead</h2><p>Hello ${emailEscape(firm.contact_name||firm.firm_name)},</p><p>ClaimAxis has assigned a new lead to <strong>${emailEscape(firm.firm_name)}</strong>.</p><table style="width:100%;border-collapse:collapse"><tr><td><strong>Reference</strong></td><td>${emailEscape(lead.public_id)}</td></tr><tr><td><strong>Name</strong></td><td>${emailEscape(lead.full_name)}</td></tr><tr><td><strong>Phone</strong></td><td>${emailEscape(lead.phone)}</td></tr><tr><td><strong>Email</strong></td><td>${emailEscape(lead.email)}</td></tr><tr><td><strong>State</strong></td><td>${emailEscape(lead.state||"—")}</td></tr><tr><td><strong>Incident</strong></td><td>${emailEscape(lead.incident_type||"—")}</td></tr></table><p style="margin:28px 0;text-align:center"><a href="${responseUrl}" style="display:inline-block;background:#c79a45;color:#07111c;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px">Review and Respond</a></p><p style="color:#6b7280;font-size:13px">Use the secure link to accept or decline this lead.</p></div>`;
-
-  const sent = await sendEmail(env, {
-    to: firm.email,
-    subject: `New ClaimAxis Lead: ${lead.full_name} (${lead.public_id})`,
-    html,
-    replyTo: lead.email
-  });
-  if (!sent.ok) return { ok:false, error:"The lead was not sent. Please check the Resend configuration." };
-
-  const reasonNote = `[${new Date().toISOString()}] ${assignmentReason}: ${firm.firm_name}`;
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b;max-width:720px;margin:auto"><h2>New ClaimAxis Lead</h2><p>Hello ${emailEscape(firm.contact_name||firm.firm_name)},</p><p>ClaimAxis has assigned a new lead to <strong>${emailEscape(firm.firm_name)}</strong>.</p><table style="width:100%;border-collapse:collapse"><tr><td><strong>Reference</strong></td><td>${emailEscape(lead.public_id)}</td></tr><tr><td><strong>Name</strong></td><td>${emailEscape(lead.full_name)}</td></tr><tr><td><strong>Phone</strong></td><td>${emailEscape(lead.phone)}</td></tr><tr><td><strong>Email</strong></td><td>${emailEscape(lead.email)}</td></tr><tr><td><strong>State</strong></td><td>${emailEscape(lead.state||"—")}</td></tr><tr><td><strong>Incident</strong></td><td>${emailEscape(lead.incident_type||"—")}</td></tr></table><p style="margin:28px 0;text-align:center"><a href="${responseUrl}" style="display:inline-block;background:#c79a45;color:#07111c;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px">Review and Respond</a></p></div>`;
+  const sent = await sendEmail(env,{to:firm.email,subject:`New ClaimAxis Lead: ${lead.full_name} (${lead.public_id})`,html,replyTo:lead.email});
+  if (!sent.ok) return {ok:false,error:"The lead was not sent. Please check the Resend configuration."};
+  const note = `[${new Date().toISOString()}] ${assignmentReason}: ${firm.firm_name}`;
   await env.DB.prepare(`
-    UPDATE leads
-    SET status = 'sent_to_firm',
-        assigned_firm = ?,
-        firm_response = 'pending',
-        firm_response_at = NULL,
-        firm_secure_token = ?,
-        notes = CASE WHEN notes IS NULL OR trim(notes) = '' THEN ? ELSE notes || char(10) || ? END,
-        updated_at = datetime('now')
-    WHERE public_id = ?
-  `).bind(firm.firm_name, tokenHash, reasonNote, reasonNote, lead.public_id).run();
-
-  return { ok:true, firm:{ id:firm.id, firm_name:firm.firm_name, email:firm.email } };
+    UPDATE leads SET status='sent_to_firm', assigned_firm=?, firm_response='pending',
+      firm_response_at=NULL, firm_secure_token=?,
+      notes=CASE WHEN notes IS NULL OR trim(notes)='' THEN ? ELSE notes || char(10) || ? END,
+      updated_at=datetime('now') WHERE public_id=?
+  `).bind(firm.firm_name,tokenHash,note,note,lead.public_id).run();
+  return {ok:true,firm:{id:firm.id,firm_name:firm.firm_name,email:firm.email}};
 }
 
 async function autoAssignLead(env, publicId, force = false) {
   if (!force) {
-    const enabled = await getPlatformSetting(env, "auto_assignment_enabled", "false");
-    if (enabled !== "true") return { ok:false, skipped:true, reason:"Auto Assignment is disabled." };
+    const enabled = await getPlatformSetting(env,"auto_assignment_enabled","false");
+    if (enabled !== "true") return {ok:false,skipped:true,reason:"Auto Assignment is disabled."};
   }
-
-  const lead = await env.DB.prepare(`SELECT * FROM leads WHERE public_id = ? LIMIT 1`).bind(publicId).first();
-  if (!lead) return { ok:false, error:"Lead not found." };
-  if (lead.assigned_firm && !force) return { ok:false, skipped:true, reason:"Lead is already assigned." };
-
-  const firm = await findBestLawFirm(env, lead);
-  if (!firm) return { ok:false, skipped:true, reason:"No active matching law firm with available capacity." };
-
-  const reason = `Auto assignment (score ${firm.score}; ${firm.usedToday}/${firm.dailyLimit || 'unlimited'} used today)`;
-  return deliverLeadToFirm(env, lead, firm, reason);
+  const lead = await env.DB.prepare(`SELECT * FROM leads WHERE public_id=? LIMIT 1`).bind(publicId).first();
+  if (!lead) return {ok:false,error:"Lead not found."};
+  if (lead.assigned_firm && !force) return {ok:false,skipped:true,reason:"Lead is already assigned."};
+  const firm = await findBestLawFirm(env,lead);
+  if (!firm) return {ok:false,skipped:true,reason:"No active matching law firm with available capacity."};
+  return deliverLeadToFirm(env,lead,firm,`Auto assignment (score ${firm.score})`);
 }
 
 async function getAutoAssignmentSettings(request, env) {
-  if (!isAdmin(request, env)) return json({ ok:false, error:"Unauthorized." }, 401);
-  const enabled = await getPlatformSetting(env, "auto_assignment_enabled", "false");
-  return json({ ok:true, auto_assignment_enabled: enabled === "true" });
+  if (!isAdmin(request,env)) return json({ok:false,error:"Unauthorized."},401);
+  const enabled = await getPlatformSetting(env,"auto_assignment_enabled","false");
+  return json({ok:true,auto_assignment_enabled:enabled === "true"});
 }
 
 async function updateAutoAssignmentSettings(request, env) {
-  if (!isAdmin(request, env)) return json({ ok:false, error:"Unauthorized." }, 401);
-  const body = await request.json().catch(() => ({}));
+  if (!isAdmin(request,env)) return json({ok:false,error:"Unauthorized."},401);
+  const body = await request.json().catch(()=>({}));
   const enabled = body.auto_assignment_enabled === true;
-  await setPlatformSetting(env, "auto_assignment_enabled", enabled ? "true" : "false");
-  return json({ ok:true, auto_assignment_enabled: enabled });
+  await setPlatformSetting(env,"auto_assignment_enabled",enabled?"true":"false");
+  return json({ok:true,auto_assignment_enabled:enabled});
 }
 
 async function assignLeadNow(request, env, publicId) {
-  if (!isAdmin(request, env)) return json({ ok:false, error:"Unauthorized." }, 401);
-  const result = await autoAssignLead(env, publicId, true);
-  if (!result.ok) return json({ ok:false, error:result.error || result.reason || "Unable to assign lead." }, 400);
-  return json({ ok:true, message:`Lead assigned to ${result.firm.firm_name}.`, firm:result.firm });
+  if (!isAdmin(request,env)) return json({ok:false,error:"Unauthorized."},401);
+  const result = await autoAssignLead(env,publicId,true);
+  if (!result.ok) return json({ok:false,error:result.error||result.reason||"Unable to assign lead."},400);
+  return json({ok:true,message:`Lead assigned to ${result.firm.firm_name}.`,firm:result.firm});
 }
 
 async function createLead(request, env) {
@@ -699,15 +665,14 @@ async function sendLeadToFirm(request, env, publicId) {
   if (!isAdmin(request, env)) return json({ ok: false, error: "Unauthorized." }, 401);
   const body = await request.json().catch(() => ({}));
   const firmId = Number(body.firm_id);
-  if (!Number.isInteger(firmId) || firmId < 1) return json({ok:false, error:"Please select a valid law firm."},400);
+  if (!Number.isInteger(firmId) || firmId < 1) return json({ok:false,error:"Please select a valid law firm."},400);
   const lead = await env.DB.prepare(`SELECT * FROM leads WHERE public_id = ? LIMIT 1`).bind(publicId).first();
   if (!lead) return json({ok:false,error:"Lead not found."},404);
   const firm = await env.DB.prepare(`SELECT * FROM law_firms WHERE id = ? LIMIT 1`).bind(firmId).first();
   if (!firm) return json({ok:false,error:"Law firm not found."},404);
   if (String(firm.status||"").toLowerCase()!=="active") return json({ok:false,error:"This law firm is not active."},400);
   if (!firm.email || !isEmail(firm.email)) return json({ok:false,error:"This law firm does not have a valid email address."},400);
-
-  const result = await deliverLeadToFirm(env, lead, firm, "Manual assignment");
+  const result = await deliverLeadToFirm(env,lead,firm,"Manual assignment");
   if (!result.ok) return json({ok:false,error:result.error},502);
   return json({ok:true,message:`Lead sent to ${firm.firm_name}.`,firm:result.firm});
 }
