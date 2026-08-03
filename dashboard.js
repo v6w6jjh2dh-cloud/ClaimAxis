@@ -13,8 +13,6 @@ const modalContent=document.getElementById('leadModalContent');
 const dashTitle=document.getElementById('dashTitle');
 const dashEyebrow=document.getElementById('dashEyebrow');
 const dashStats=document.getElementById('dashStats');
-const autoAssignmentToggle=document.getElementById('autoAssignmentToggle');
-const autoAssignmentText=document.getElementById('autoAssignmentText');
 let currentFilter='all';
 let searchTimer;
 let lawFirmsCache=[];
@@ -67,43 +65,6 @@ async function api(url,options={}){
   }
   if(!response.ok||!data.ok)throw new Error(data.error||'Request failed.');
   return data;
-}
-
-async function loadAutoAssignment(){
-  if(!autoAssignmentToggle||!autoAssignmentText)return;
-  try{
-    const data=await api('/api/settings/auto-assignment');
-    autoAssignmentToggle.checked=Boolean(data.enabled);
-    autoAssignmentText.textContent=data.enabled
-      ? 'ON — new matching leads are sent automatically.'
-      : 'OFF — every lead stays New until you assign it.';
-  }catch(error){
-    autoAssignmentToggle.checked=false;
-    autoAssignmentText.textContent=`Unavailable: ${error.message}`;
-  }
-}
-
-if(autoAssignmentToggle){
-  autoAssignmentToggle.addEventListener('change',async()=>{
-    const requested=autoAssignmentToggle.checked;
-    autoAssignmentToggle.disabled=true;
-    autoAssignmentText.textContent='Saving…';
-    try{
-      const data=await api('/api/settings/auto-assignment',{
-        method:'PATCH',
-        body:JSON.stringify({enabled:requested})
-      });
-      autoAssignmentToggle.checked=Boolean(data.enabled);
-      autoAssignmentText.textContent=data.enabled
-        ? 'ON — new matching leads are sent automatically.'
-        : 'OFF — every lead stays New until you assign it.';
-    }catch(error){
-      autoAssignmentToggle.checked=!requested;
-      autoAssignmentText.textContent=error.message;
-    }finally{
-      autoAssignmentToggle.disabled=false;
-    }
-  });
 }
 
 async function loadLeads(){
@@ -218,16 +179,18 @@ async function openLead(id){
       assignButton.addEventListener('click',async()=>{
         const msg=document.getElementById('modalMessage');
         assignButton.disabled=true;
-        msg.textContent='Finding the best matching firm…';
+        msg.textContent='Finding the best matching law firm…';
         try{
-          const result=await api(`/api/leads/${encodeURIComponent(id)}/assign-best`,{
+          const result=await api(`/api/leads/${encodeURIComponent(id)}/assign-best-firm`,{
             method:'POST',
-            body:'{}'
+            body:JSON.stringify({})
           });
           const select=document.getElementById('assignedFirmSelect');
-          const option=[...select.options].find(item=>Number(item.dataset.firmId||0)===Number(result.firm?.id||0));
-          if(option) select.value=option.value;
-          msg.textContent=result.message||'Best matching firm selected.';
+          if(select && result.firm?.id){
+            const option=[...select.options].find(item=>Number(item.dataset?.firmId||0)===Number(result.firm.id));
+            if(option) select.value=option.value;
+          }
+          msg.textContent=result.message||'Best matching law firm assigned.';
           await loadLeads();
         }catch(error){
           msg.textContent=error.message;
@@ -281,7 +244,7 @@ loginForm.addEventListener('submit',async(e)=>{
   sessionStorage.setItem('claimaxis_admin_token',tokenInput.value);
   showDashboard();
   showLeadView('All Leads');
-  await Promise.all([loadLeads(),loadAutoAssignment()]);
+  await loadLeads();
 });
 logoutBtn.addEventListener('click',()=>{
   sessionStorage.removeItem('claimaxis_admin_token');
@@ -305,16 +268,6 @@ document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
     loadLeads();
   });
 });
-
-if(token()){
-  showDashboard();
-  showLeadView('All Leads');
-  loadLeads();
-  loadAutoAssignment();
-}else{
-  showLogin();
-}
-
 
 const firmRequestsTab=document.getElementById('firmRequestsTab');
 const firmSection=document.getElementById('firmSection');
@@ -488,3 +441,59 @@ if(lawFirmForm){
     }
   });
 }
+
+// Auto-assignment controls and safe startup. Kept at the end so every const/function above is initialized first.
+const autoAssignmentToggle=document.getElementById('autoAssignmentToggle');
+const autoAssignmentStatus=document.getElementById('autoAssignmentStatus');
+
+async function loadAutoAssignmentSetting(){
+  if(!autoAssignmentToggle||!autoAssignmentStatus) return;
+  autoAssignmentStatus.textContent='Checking status…';
+  try{
+    const data=await api('/api/settings/auto-assignment');
+    autoAssignmentToggle.checked=Boolean(data.enabled);
+    autoAssignmentStatus.textContent=data.enabled
+      ? 'ON — new matching leads are assigned and emailed automatically.'
+      : 'OFF — every lead stays New until you assign it.';
+  }catch(error){
+    autoAssignmentStatus.textContent=error.message;
+  }
+}
+
+if(autoAssignmentToggle){
+  autoAssignmentToggle.addEventListener('change',async()=>{
+    const enabled=autoAssignmentToggle.checked;
+    autoAssignmentToggle.disabled=true;
+    if(autoAssignmentStatus) autoAssignmentStatus.textContent='Saving…';
+    try{
+      const data=await api('/api/settings/auto-assignment',{
+        method:'PATCH',
+        body:JSON.stringify({enabled})
+      });
+      autoAssignmentToggle.checked=Boolean(data.enabled);
+      if(autoAssignmentStatus){
+        autoAssignmentStatus.textContent=data.enabled
+          ? 'ON — new matching leads are assigned and emailed automatically.'
+          : 'OFF — every lead stays New until you assign it.';
+      }
+    }catch(error){
+      autoAssignmentToggle.checked=!enabled;
+      if(autoAssignmentStatus) autoAssignmentStatus.textContent=error.message;
+    }finally{
+      autoAssignmentToggle.disabled=false;
+    }
+  });
+}
+
+async function startDashboard(){
+  if(token()){
+    showDashboard();
+    showLeadView('All Leads');
+    await Promise.allSettled([loadLeads(),loadAutoAssignmentSetting()]);
+  }else{
+    showLogin();
+  }
+}
+
+startDashboard();
+

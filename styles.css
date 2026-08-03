@@ -935,8 +935,8 @@ button:disabled{opacity:.65;cursor:wait}
 button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none!important}
 
 
-/* Safe auto-assignment controls */
-.automation-control{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 28px;padding:18px 22px;border:1px solid rgba(143,166,190,.25);border-radius:18px;background:rgba(16,39,61,.72)}
-.automation-control>div{display:grid;gap:4px}.automation-control small{color:#e7bd66;letter-spacing:.12em}.automation-control strong{font-size:1.05rem}.automation-control span{color:#aab9c9;font-size:.92rem}
-.toggle-switch{position:relative;display:inline-flex;width:58px;height:32px;flex:0 0 auto}.toggle-switch input{opacity:0;width:0;height:0}.toggle-switch span{position:absolute;inset:0;border-radius:999px;background:#32485b;cursor:pointer;transition:.2s}.toggle-switch span:before{content:"";position:absolute;width:24px;height:24px;left:4px;top:4px;border-radius:50%;background:#fff;transition:.2s}.toggle-switch input:checked+span{background:#d9aa43}.toggle-switch input:checked+span:before{transform:translateX(26px)}.toggle-switch input:disabled+span{opacity:.55;cursor:wait}
-@media(max-width:600px){.automation-control{align-items:flex-start}.automation-control>div{max-width:78%}}
+/* Stable auto-assignment control */
+.automation-control{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 28px;padding:20px 24px;border:1px solid rgba(130,162,190,.22);border-radius:20px;background:rgba(14,38,60,.72)}
+.automation-control>div{display:grid;gap:5px}.automation-control small{color:#e4bc68;letter-spacing:.15em}.automation-control strong{font-size:1.15rem}.automation-control span{color:#93a8ba;line-height:1.5}
+.switch-control{position:relative;display:inline-flex;flex:0 0 auto}.switch-control input{position:absolute;opacity:0;pointer-events:none}.switch-control span{display:block;width:58px;height:34px;border-radius:999px;background:#273949;border:1px solid #506272;position:relative;transition:.2s}.switch-control span:after{content:"";position:absolute;width:26px;height:26px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s}.switch-control input:checked+span{background:#27a96f}.switch-control input:checked+span:after{transform:translateX(24px)}.switch-control input:disabled+span{opacity:.55}
+@media(max-width:640px){.automation-control{align-items:flex-start}.automation-control span{font-size:.92rem}}
