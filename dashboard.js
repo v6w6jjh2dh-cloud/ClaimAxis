@@ -186,6 +186,7 @@ async function openLead(id){
           const result=await api(`/api/leads/${encodeURIComponent(id)}/auto-assign`,{method:'POST',body:'{}'});
           msg.textContent=result.message||'Lead assigned.';
           await loadLeads();
+          setTimeout(()=>openLead(id),500);
         }catch(error){msg.textContent=error.message}
         finally{autoAssignButton.disabled=false}
       });
@@ -236,18 +237,31 @@ async function loadAutoAssignmentSetting(){
   try{
     const data=await api('/api/settings/auto-assignment');
     autoAssignmentToggle.checked=Boolean(data.auto_assignment_enabled);
-    autoAssignmentStatus.textContent=data.auto_assignment_enabled?'ON — new matching leads may be sent automatically.':'OFF — every lead stays New until you assign it.';
-  }catch(error){autoAssignmentStatus.textContent='Auto Assignment unavailable: '+error.message}
+    autoAssignmentStatus.textContent=data.auto_assignment_enabled
+      ? 'ON — new matching leads may be sent automatically.'
+      : 'OFF — every lead stays New until you assign it.';
+  }catch(error){
+    autoAssignmentStatus.textContent=error.message;
+  }
 }
+
 if(autoAssignmentToggle){
   autoAssignmentToggle.addEventListener('change',async()=>{
     const enabled=autoAssignmentToggle.checked;
     autoAssignmentToggle.disabled=true;
+    autoAssignmentStatus.textContent='Saving…';
     try{
-      const data=await api('/api/settings/auto-assignment',{method:'PATCH',body:JSON.stringify({auto_assignment_enabled:enabled})});
-      autoAssignmentStatus.textContent=data.auto_assignment_enabled?'ON — new matching leads may be sent automatically.':'OFF — every lead stays New until you assign it.';
-    }catch(error){autoAssignmentToggle.checked=!enabled;autoAssignmentStatus.textContent=error.message}
-    finally{autoAssignmentToggle.disabled=false}
+      const data=await api('/api/settings/auto-assignment',{
+        method:'PATCH',
+        body:JSON.stringify({auto_assignment_enabled:enabled})
+      });
+      autoAssignmentStatus.textContent=data.auto_assignment_enabled
+        ? 'ON — new matching leads may be sent automatically.'
+        : 'OFF — every lead stays New until you assign it.';
+    }catch(error){
+      autoAssignmentToggle.checked=!enabled;
+      autoAssignmentStatus.textContent=error.message;
+    }finally{autoAssignmentToggle.disabled=false}
   });
 }
 
@@ -256,8 +270,7 @@ loginForm.addEventListener('submit',async(e)=>{
   sessionStorage.setItem('claimaxis_admin_token',tokenInput.value);
   showDashboard();
   showLeadView('All Leads');
-  await loadLeads();
-  loadAutoAssignmentSetting();
+  await Promise.all([loadLeads(),loadAutoAssignmentSetting()]);
 });
 logoutBtn.addEventListener('click',()=>{
   sessionStorage.removeItem('claimaxis_admin_token');
