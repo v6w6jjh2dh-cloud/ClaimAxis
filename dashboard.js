@@ -183,29 +183,35 @@ loginForm.addEventListener('submit',async(e)=>{
   e.preventDefault();
   sessionStorage.setItem('claimaxis_admin_token',tokenInput.value);
   showDashboard();
+  showLeadView('All Leads');
   await loadLeads();
 });
 logoutBtn.addEventListener('click',()=>{
   sessionStorage.removeItem('claimaxis_admin_token');
   showLogin();
 });
-refreshBtn.addEventListener('click',loadLeads);
+refreshBtn.addEventListener('click',()=>{
+  if(lawFirmsSection && lawFirmsSection.style.display!=='none') return loadLawFirms();
+  if(firmSection && firmSection.style.display!=='none') return loadFirmRequests();
+  return loadLeads();
+});
 searchInput.addEventListener('input',()=>{
   clearTimeout(searchTimer);
   searchTimer=setTimeout(loadLeads,350);
 });
-document.querySelectorAll('.sidebar nav button').forEach(button=>{
+document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
   button.addEventListener('click',()=>{
     document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
     button.classList.add('active');
-    currentFilter=button.dataset.filter;
-    document.getElementById('listTitle').textContent=button.textContent;
+    currentFilter=button.dataset.filter||'all';
+    showLeadView(button.textContent);
     loadLeads();
   });
 });
 
 if(token()){
   showDashboard();
+  showLeadView('All Leads');
   loadLeads();
 }else{
   showLogin();
@@ -252,12 +258,6 @@ if(firmRequestsTab){
 }
 if(refreshFirmsBtn) refreshFirmsBtn.addEventListener('click',loadFirmRequests);
 
-document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
-  button.addEventListener('click',()=>{
-    showLeadView(button.textContent);
-  });
-});
-
 
 // Law firm management
 const lawFirmsTab=document.getElementById('lawFirmsTab');
@@ -293,7 +293,7 @@ function showFirmRequestsView(){
   if(dashStats) dashStats.style.display='none';
   if(dashTitle) dashTitle.textContent='Firm Requests';
   if(dashEyebrow) dashEyebrow.textContent='PARTNER PIPELINE';
-  window.scrollTo({top:0,behavior:'smooth'});
+  dashboardMain.scrollIntoView({block:'start',behavior:'smooth'});
 }
 
 function showLawFirmsView(){
@@ -302,7 +302,7 @@ function showLawFirmsView(){
   if(dashStats) dashStats.style.display='none';
   if(dashTitle) dashTitle.textContent='Law Firms';
   if(dashEyebrow) dashEyebrow.textContent='PARTNER NETWORK';
-  window.scrollTo({top:0,behavior:'smooth'});
+  dashboardMain.scrollIntoView({block:'start',behavior:'smooth'});
 }
 
 function firmStatusLabel(status){
