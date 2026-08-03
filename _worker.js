@@ -905,10 +905,6 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname === "/dashboard" || url.pathname === "/dashboard/") {
-      return Response.redirect(`${url.origin}/dashboard.html`, 302);
-    }
-
     if (url.pathname.startsWith("/api/")) {
       return handleApi(request, env, url.pathname);
     }
