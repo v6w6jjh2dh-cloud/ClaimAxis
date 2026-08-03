@@ -10,6 +10,6 @@ Required Cloudflare configuration:
 Endpoints:
 - GET /api/health
 - POST /api/leads
-- GET /api/leads 
+- GET /api/leads
 - GET/PATCH /api/leads/:id
 - POST/GET /api/firm-requests

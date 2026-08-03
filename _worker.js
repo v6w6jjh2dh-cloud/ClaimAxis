@@ -6,7 +6,7 @@ const STATUS_VALUES = new Set([
   "signed",
   "closed",
   "rejected"
-]); 
+]);
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -62,6 +62,119 @@ function volumeToDaily(value) {
   if (text.includes("25")) return 2;
 
   return 1;
+}
+
+function emailEscape(value = "") {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
+
+async function sendEmail(env, { to, subject, html, replyTo }) {
+  if (!env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY is missing; email skipped.");
+    return { ok: false, skipped: true };
+  }
+
+  const recipients = Array.isArray(to) ? to : [to];
+  const payload = {
+    from: "ClaimAxis Leads <leads@claimaxis.com>",
+    to: recipients,
+    subject,
+    html
+  };
+
+  if (replyTo) payload.reply_to = replyTo;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error("Resend error:", response.status, result);
+    return { ok: false, status: response.status, result };
+  }
+
+  return { ok: true, result };
+}
+
+async function sendLeadEmails(env, lead) {
+  const dashboardUrl = "https://claimaxis.com/dashboard.html";
+  const adminEmail = env.NOTIFICATION_EMAIL || "claimaxis.business@gmail.com";
+
+  const adminHtml = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b;max-width:680px;margin:auto">
+      <h2 style="margin-bottom:8px">New ClaimAxis Lead</h2>
+      <p style="margin-top:0;color:#526477">A new injury intake was submitted.</p>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Reference</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.publicId)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Name</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.fullName)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Phone</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.phone)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Email</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.email)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>State</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.state || "—")}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Incident</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.incidentType || "—")}</td></tr>
+      </table>
+      <p style="margin-top:24px"><a href="${dashboardUrl}" style="background:#d9aa43;color:#071526;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open Dashboard</a></p>
+    </div>`;
+
+  const customerHtml = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b;max-width:680px;margin:auto">
+      <h2>We received your inquiry</h2>
+      <p>Hello ${emailEscape(lead.fullName)},</p>
+      <p>Thank you for contacting ClaimAxis. Your information was received securely and is being reviewed.</p>
+      <p><strong>Reference:</strong> ${emailEscape(lead.publicId)}</p>
+      <p>A member of our intake team may contact you using your preferred contact method.</p>
+      <p style="color:#6b7280;font-size:13px">Submitting an inquiry does not create an attorney-client relationship and does not guarantee representation.</p>
+    </div>`;
+
+  return Promise.allSettled([
+    sendEmail(env, {
+      to: adminEmail,
+      subject: `New Lead: ${lead.fullName} (${lead.publicId})`,
+      html: adminHtml,
+      replyTo: lead.email
+    }),
+    sendEmail(env, {
+      to: lead.email,
+      subject: `ClaimAxis received your inquiry — ${lead.publicId}`,
+      html: customerHtml
+    })
+  ]);
+}
+
+async function sendFirmRequestEmail(env, firm) {
+  const adminEmail = env.NOTIFICATION_EMAIL || "claimaxis.business@gmail.com";
+  const dashboardUrl = "https://claimaxis.com/dashboard.html";
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b;max-width:680px;margin:auto">
+      <h2>New Law Firm Request</h2>
+      <p><strong>Firm:</strong> ${emailEscape(firm.firmName)}</p>
+      <p><strong>Contact:</strong> ${emailEscape(firm.contactName)}</p>
+      <p><strong>Email:</strong> ${emailEscape(firm.email)}</p>
+      <p><strong>Phone:</strong> ${emailEscape(firm.phone)}</p>
+      <p><strong>Territory:</strong> ${emailEscape(firm.territory || "—")}</p>
+      <p><strong>Practice details:</strong> ${emailEscape(firm.practiceAreas || "—")}</p>
+      <p><a href="${dashboardUrl}" style="background:#d9aa43;color:#071526;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open Dashboard</a></p>
+    </div>`;
+
+  return sendEmail(env, {
+    to: adminEmail,
+    subject: `New Firm Request: ${firm.firmName}`,
+    html,
+    replyTo: firm.email
+  });
 }
 
 async function health(env) {
@@ -192,6 +305,15 @@ async function createLead(request, env) {
       ipHash,
       userAgent
     ).run();
+
+    await sendLeadEmails(env, {
+      publicId,
+      fullName,
+      phone,
+      email,
+      state: clean(body.state, 100),
+      incidentType: clean(body.incident_type, 100)
+    });
 
     return json({
       ok: true,
@@ -462,6 +584,15 @@ async function createFirmRequest(request, env) {
       volumeToDaily(body.volume),
       "pending"
     ).run();
+
+    await sendFirmRequestEmail(env, {
+      firmName,
+      contactName,
+      email,
+      phone,
+      territory,
+      practiceAreas
+    });
 
     return json({
       ok: true,
