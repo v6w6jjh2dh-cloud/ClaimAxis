@@ -522,6 +522,77 @@ async function updateLead(request, env, publicId) {
   return json({ ok: true });
 }
 
+
+async function sendLeadToFirm(request, env, publicId) {
+  if (!isAdmin(request, env)) {
+    return json({ ok: false, error: "Unauthorized." }, 401);
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const firmId = Number(body.firm_id);
+  if (!Number.isInteger(firmId) || firmId < 1) {
+    return json({ ok: false, error: "Please select a valid law firm." }, 400);
+  }
+
+  const lead = await env.DB.prepare(`
+    SELECT * FROM leads WHERE public_id = ? LIMIT 1
+  `).bind(publicId).first();
+  if (!lead) return json({ ok: false, error: "Lead not found." }, 404);
+
+  const firm = await env.DB.prepare(`
+    SELECT * FROM law_firms WHERE id = ? LIMIT 1
+  `).bind(firmId).first();
+  if (!firm) return json({ ok: false, error: "Law firm not found." }, 404);
+  if (String(firm.status || "").toLowerCase() !== "active") {
+    return json({ ok: false, error: "This law firm is not active." }, 400);
+  }
+  if (!firm.email || !isEmail(firm.email)) {
+    return json({ ok: false, error: "This law firm does not have a valid email address." }, 400);
+  }
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b;max-width:720px;margin:auto">
+      <h2>New ClaimAxis Lead</h2>
+      <p>Hello ${emailEscape(firm.contact_name || firm.firm_name)},</p>
+      <p>ClaimAxis has assigned a new lead to <strong>${emailEscape(firm.firm_name)}</strong>.</p>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Reference</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.public_id)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Name</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.full_name)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Phone</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.phone)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Email</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.email)}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>State</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.state || "—")}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Incident</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.incident_type || "—")}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Accident date</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.accident_date || "—")}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Injuries</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.injuries || "—")}</td></tr>
+        <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb"><strong>Description</strong></td><td style="padding:8px;border-bottom:1px solid #e5e7eb">${emailEscape(lead.description || "—")}</td></tr>
+      </table>
+      <p style="color:#6b7280;font-size:13px">Please contact the lead promptly and handle all information securely.</p>
+    </div>`;
+
+  const sent = await sendEmail(env, {
+    to: firm.email,
+    subject: `New ClaimAxis Lead: ${lead.full_name} (${lead.public_id})`,
+    html,
+    replyTo: lead.email
+  });
+
+  if (!sent.ok) {
+    return json({ ok: false, error: "The lead was not sent. Please check the Resend configuration." }, 502);
+  }
+
+  await env.DB.prepare(`
+    UPDATE leads
+    SET status = 'sent_to_firm', assigned_firm = ?, updated_at = datetime('now')
+    WHERE public_id = ?
+  `).bind(firm.firm_name, publicId).run();
+
+  return json({
+    ok: true,
+    message: `Lead sent to ${firm.firm_name}.`,
+    firm: { id: firm.id, firm_name: firm.firm_name, email: firm.email }
+  });
+}
+
 async function createFirmRequest(request, env) {
   try {
     if (!env.DB) {
@@ -784,6 +855,12 @@ async function handleApi(request, env, pathname) {
     }
   }
 
+
+  const sendLeadMatch = pathname.match(/^\/api\/leads\/([^/]+)\/send-to-firm$/);
+  if (sendLeadMatch && request.method === "POST") {
+    return sendLeadToFirm(request, env, decodeURIComponent(sendLeadMatch[1]));
+  }
+
   const leadMatch = pathname.match(/^\/api\/leads\/([^/]+)$/);
 
   if (leadMatch) {
@@ -832,6 +909,10 @@ async function handleApi(request, env, pathname) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/dashboard" || url.pathname === "/dashboard/") {
+      return Response.redirect(`${url.origin}/dashboard.html`, 302);
+    }
 
     if (url.pathname.startsWith("/api/")) {
       return handleApi(request, env, url.pathname);

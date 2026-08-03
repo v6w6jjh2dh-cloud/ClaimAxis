@@ -143,15 +143,17 @@ async function openLead(id){
           </select>
         </label>
         <label>Assigned firm
-          <select name="assigned_firm">
+          <select name="assigned_firm" id="assignedFirmSelect">
             <option value="">Not assigned</option>
-            ${lawFirmsCache.filter(f=>f.status==='active').map(f=>`<option value="${escapeHtml(f.firm_name)}" ${f.firm_name===l.assigned_firm?'selected':''}>${escapeHtml(f.firm_name)}</option>`).join('')}
+            ${lawFirmsCache.filter(f=>f.status==='active').map(f=>`<option value="${escapeHtml(f.firm_name)}" data-firm-id="${f.id}" ${f.firm_name===l.assigned_firm?'selected':''}>${escapeHtml(f.firm_name)}</option>`).join('')}
           </select>
         </label>
         <label>Internal notes
           <textarea name="notes" rows="5">${escapeHtml(l.notes||'')}</textarea>
         </label>
-        <button class="btn gold full" type="submit">Save Changes</button>
+        <button class="btn full" type="submit">Save Changes</button>
+        <button class="btn gold full" id="sendLeadToFirmBtn" type="button" ${lawFirmsCache.some(f=>f.status==='active')?'':'disabled'}>Send Lead to Law Firm</button>
+        <small class="send-lead-note">This sends the lead by email and changes the status to Sent to Firm.</small>
       </form>
       <div id="modalMessage"></div>
     `;
@@ -169,6 +171,36 @@ async function openLead(id){
         await loadLeads();
       }catch(error){msg.textContent=error.message}
     });
+
+    const sendButton=document.getElementById('sendLeadToFirmBtn');
+    if(sendButton){
+      sendButton.addEventListener('click',async()=>{
+        const msg=document.getElementById('modalMessage');
+        const select=document.getElementById('assignedFirmSelect');
+        const option=select.options[select.selectedIndex];
+        const firmId=Number(option?.dataset?.firmId||0);
+        if(!firmId){
+          msg.textContent='Please select an active law firm first.';
+          return;
+        }
+        const firmName=option.textContent.trim();
+        if(!confirm(`Send this lead to ${firmName}?`)) return;
+        sendButton.disabled=true;
+        msg.textContent='Sending lead…';
+        try{
+          const result=await api(`/api/leads/${encodeURIComponent(id)}/send-to-firm`,{
+            method:'POST',
+            body:JSON.stringify({firm_id:firmId})
+          });
+          msg.textContent=result.message||'Lead sent successfully.';
+          await loadLeads();
+          setTimeout(closeModal,900);
+        }catch(error){
+          msg.textContent=error.message;
+          sendButton.disabled=false;
+        }
+      });
+    }
   }catch(error){
     modalContent.innerHTML=`<p>${escapeHtml(error.message)}</p>`;
   }

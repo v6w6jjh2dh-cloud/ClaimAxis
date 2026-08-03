@@ -928,3 +928,8 @@ button:disabled{opacity:.65;cursor:wait}
 #lawFirmsTable .dash-row span:first-child small{display:block}
 #lawFirmsTable .dash-row span:first-child small{color:#72869a;font-size:.68rem}
 @media(max-width:620px){.form-two-col{grid-template-columns:1fr}.section-actions{width:100%}.section-actions .btn{flex:1}}
+
+
+/* Phase 4: manual lead assignment */
+.send-lead-note{display:block;color:#7f93a8;font-size:.78rem;line-height:1.5;margin-top:-4px}
+button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none!important}
