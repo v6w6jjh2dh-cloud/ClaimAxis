@@ -390,8 +390,8 @@ async function listLeads(request, env) {
       email,
       preferred_contact,
       assigned_firm,
-      (SELECT response FROM lead_firm_actions a WHERE a.lead_public_id = leads.public_id ORDER BY a.id DESC LIMIT 1) AS firm_response,
-      (SELECT responded_at FROM lead_firm_actions a WHERE a.lead_public_id = leads.public_id ORDER BY a.id DESC LIMIT 1) AS firm_response_at
+      firm_response,
+      firm_response_at
     FROM leads
     ${where}
     ORDER BY datetime(created_at) DESC
@@ -440,15 +440,9 @@ async function getLead(request, env, publicId) {
   }
 
   const lead = await env.DB.prepare(`
-    SELECT leads.*,
-      a.response AS firm_response,
-      a.responded_at AS firm_response_at,
-      a.sent_at AS sent_to_firm_at,
-      a.firm_id AS assigned_firm_id
+    SELECT *
     FROM leads
-    LEFT JOIN lead_firm_actions a ON a.lead_public_id = leads.public_id
-    WHERE leads.public_id = ?
-    ORDER BY a.id DESC
+    WHERE public_id = ?
     LIMIT 1
   `).bind(publicId).first();
 
@@ -553,32 +547,93 @@ async function sendLeadToFirm(request, env, publicId) {
   const html=`<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b;max-width:720px;margin:auto"><h2>New ClaimAxis Lead</h2><p>Hello ${emailEscape(firm.contact_name||firm.firm_name)},</p><p>ClaimAxis has assigned a new lead to <strong>${emailEscape(firm.firm_name)}</strong>.</p><table style="width:100%;border-collapse:collapse"><tr><td><strong>Reference</strong></td><td>${emailEscape(lead.public_id)}</td></tr><tr><td><strong>Name</strong></td><td>${emailEscape(lead.full_name)}</td></tr><tr><td><strong>Phone</strong></td><td>${emailEscape(lead.phone)}</td></tr><tr><td><strong>Email</strong></td><td>${emailEscape(lead.email)}</td></tr><tr><td><strong>State</strong></td><td>${emailEscape(lead.state||"—")}</td></tr><tr><td><strong>Incident</strong></td><td>${emailEscape(lead.incident_type||"—")}</td></tr></table><p style="margin:28px 0;text-align:center"><a href="${responseUrl}" style="display:inline-block;background:#c79a45;color:#07111c;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px">Review and Respond</a></p><p style="color:#6b7280;font-size:13px">Use the secure link to accept or decline this lead.</p></div>`;
   const sent=await sendEmail(env,{to:firm.email,subject:`New ClaimAxis Lead: ${lead.full_name} (${lead.public_id})`,html,replyTo:lead.email});
   if(!sent.ok) return json({ok:false,error:"The lead was not sent. Please check the Resend configuration."},502);
-  await env.DB.prepare(`INSERT INTO lead_firm_actions (lead_public_id,firm_id,firm_name,firm_email,token_hash,response,sent_at) VALUES (?,?,?,?,?,'pending',datetime('now')) ON CONFLICT(lead_public_id) DO UPDATE SET firm_id=excluded.firm_id,firm_name=excluded.firm_name,firm_email=excluded.firm_email,token_hash=excluded.token_hash,response='pending',sent_at=datetime('now'),responded_at=NULL`).bind(publicId,firm.id,firm.firm_name,firm.email,tokenHash).run();
-  await env.DB.prepare(`UPDATE leads SET status='sent_to_firm',assigned_firm=?,updated_at=datetime('now') WHERE public_id=?`).bind(firm.firm_name,publicId).run();
+  await env.DB.prepare(`
+    UPDATE leads
+    SET status = 'sent_to_firm',
+        assigned_firm = ?,
+        firm_response = 'pending',
+        firm_response_at = NULL,
+        firm_secure_token = ?,
+        updated_at = datetime('now')
+    WHERE public_id = ?
+  `).bind(firm.firm_name, tokenHash, publicId).run();
   return json({ok:true,message:`Lead sent to ${firm.firm_name}.`,firm:{id:firm.id,firm_name:firm.firm_name,email:firm.email}});
 }
 
 async function getFirmAction(request, env) {
-  const rawToken=clean(new URL(request.url).searchParams.get("token"),200);
-  if(!rawToken) return json({ok:false,error:"Missing response token."},400);
-  const tokenHash=await hash(rawToken);
-  const action=await env.DB.prepare(`SELECT a.lead_public_id,a.firm_name,a.response,a.sent_at,a.responded_at,l.full_name,l.state,l.incident_type FROM lead_firm_actions a JOIN leads l ON l.public_id=a.lead_public_id WHERE a.token_hash=? LIMIT 1`).bind(tokenHash).first();
-  if(!action) return json({ok:false,error:"This response link is invalid or expired."},404);
-  return json({ok:true,action});
+  const rawToken = clean(new URL(request.url).searchParams.get("token"), 200);
+  if (!rawToken) return json({ ok: false, error: "Missing response token." }, 400);
+
+  const tokenHash = await hash(rawToken);
+  const lead = await env.DB.prepare(`
+    SELECT public_id AS lead_public_id,
+           assigned_firm AS firm_name,
+           firm_response AS response,
+           firm_response_at AS responded_at,
+           updated_at AS sent_at,
+           full_name,
+           state,
+           incident_type
+    FROM leads
+    WHERE firm_secure_token = ?
+    LIMIT 1
+  `).bind(tokenHash).first();
+
+  if (!lead) return json({ ok: false, error: "This response link is invalid or expired." }, 404);
+  return json({ ok: true, action: lead });
 }
 
 async function respondToFirmAction(request, env) {
-  const body=await request.json().catch(()=>({}));
-  const rawToken=clean(body.token,200);
-  const decision=clean(body.decision,20).toLowerCase();
-  if(!rawToken || !["accepted","declined"].includes(decision)) return json({ok:false,error:"Invalid response."},400);
-  const tokenHash=await hash(rawToken);
-  const action=await env.DB.prepare(`SELECT a.*,l.full_name,l.incident_type,l.state FROM lead_firm_actions a JOIN leads l ON l.public_id=a.lead_public_id WHERE a.token_hash=? LIMIT 1`).bind(tokenHash).first();
-  if(!action) return json({ok:false,error:"This response link is invalid or expired."},404);
-  if(action.response!=="pending") return json({ok:true,already_responded:true,response:action.response,message:`This lead was already ${action.response}.`});
-  await env.DB.prepare(`UPDATE lead_firm_actions SET response=?,responded_at=datetime('now') WHERE id=?`).bind(decision,action.id).run();
-  if(env.RESEND_API_KEY){const adminHtml=`<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>Law Firm Response</h2><p><strong>${emailEscape(action.firm_name)}</strong> ${decision} lead <strong>${emailEscape(action.lead_public_id)}</strong>.</p><p>Client: ${emailEscape(action.full_name)}</p></div>`;await sendEmail(env,{to:"claimaxis.business@gmail.com",subject:`${action.firm_name} ${decision} ${action.lead_public_id}`,html:adminHtml});}
-  return json({ok:true,response:decision,message:`Lead ${decision}. Thank you.`});
+  const body = await request.json().catch(() => ({}));
+  const rawToken = clean(body.token, 200);
+  const decision = clean(body.decision, 20).toLowerCase();
+
+  if (!rawToken || !["accepted", "declined"].includes(decision)) {
+    return json({ ok: false, error: "Invalid response." }, 400);
+  }
+
+  const tokenHash = await hash(rawToken);
+  const lead = await env.DB.prepare(`
+    SELECT public_id AS lead_public_id,
+           assigned_firm AS firm_name,
+           firm_response AS response,
+           full_name,
+           incident_type,
+           state
+    FROM leads
+    WHERE firm_secure_token = ?
+    LIMIT 1
+  `).bind(tokenHash).first();
+
+  if (!lead) return json({ ok: false, error: "This response link is invalid or expired." }, 404);
+
+  if (lead.response && lead.response !== "pending") {
+    return json({
+      ok: true,
+      already_responded: true,
+      response: lead.response,
+      message: `This lead was already ${lead.response}.`
+    });
+  }
+
+  await env.DB.prepare(`
+    UPDATE leads
+    SET firm_response = ?,
+        firm_response_at = datetime('now'),
+        updated_at = datetime('now')
+    WHERE public_id = ?
+  `).bind(decision, lead.lead_public_id).run();
+
+  if (env.RESEND_API_KEY) {
+    const adminHtml = `<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>Law Firm Response</h2><p><strong>${emailEscape(lead.firm_name || "Law firm")}</strong> ${decision} lead <strong>${emailEscape(lead.lead_public_id)}</strong>.</p><p>Client: ${emailEscape(lead.full_name)}</p></div>`;
+    await sendEmail(env, {
+      to: "claimaxis.business@gmail.com",
+      subject: `${lead.firm_name || "Law firm"} ${decision} ${lead.lead_public_id}`,
+      html: adminHtml
+    });
+  }
+
+  return json({ ok: true, response: decision, message: `Lead ${decision}. Thank you.` });
 }
 
 async function createFirmRequest(request, env) {
