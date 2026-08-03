@@ -13,6 +13,8 @@ const modalContent=document.getElementById('leadModalContent');
 const dashTitle=document.getElementById('dashTitle');
 const dashEyebrow=document.getElementById('dashEyebrow');
 const dashStats=document.getElementById('dashStats');
+const autoAssignmentToggle=document.getElementById('autoAssignmentToggle');
+const autoAssignmentText=document.getElementById('autoAssignmentText');
 let currentFilter='all';
 let searchTimer;
 let lawFirmsCache=[];
@@ -65,6 +67,43 @@ async function api(url,options={}){
   }
   if(!response.ok||!data.ok)throw new Error(data.error||'Request failed.');
   return data;
+}
+
+async function loadAutoAssignment(){
+  if(!autoAssignmentToggle||!autoAssignmentText)return;
+  try{
+    const data=await api('/api/settings/auto-assignment');
+    autoAssignmentToggle.checked=Boolean(data.enabled);
+    autoAssignmentText.textContent=data.enabled
+      ? 'ON — new matching leads are sent automatically.'
+      : 'OFF — every lead stays New until you assign it.';
+  }catch(error){
+    autoAssignmentToggle.checked=false;
+    autoAssignmentText.textContent=`Unavailable: ${error.message}`;
+  }
+}
+
+if(autoAssignmentToggle){
+  autoAssignmentToggle.addEventListener('change',async()=>{
+    const requested=autoAssignmentToggle.checked;
+    autoAssignmentToggle.disabled=true;
+    autoAssignmentText.textContent='Saving…';
+    try{
+      const data=await api('/api/settings/auto-assignment',{
+        method:'PATCH',
+        body:JSON.stringify({enabled:requested})
+      });
+      autoAssignmentToggle.checked=Boolean(data.enabled);
+      autoAssignmentText.textContent=data.enabled
+        ? 'ON — new matching leads are sent automatically.'
+        : 'OFF — every lead stays New until you assign it.';
+    }catch(error){
+      autoAssignmentToggle.checked=!requested;
+      autoAssignmentText.textContent=error.message;
+    }finally{
+      autoAssignmentToggle.disabled=false;
+    }
+  });
 }
 
 async function loadLeads(){
@@ -153,6 +192,7 @@ async function openLead(id){
           <textarea name="notes" rows="5">${escapeHtml(l.notes||'')}</textarea>
         </label>
         <button class="btn full" type="submit">Save Changes</button>
+        <button class="btn full" id="assignBestFirmBtn" type="button">Assign Best Matching Firm</button>
         <button class="btn gold full" id="sendLeadToFirmBtn" type="button" ${lawFirmsCache.some(f=>f.status==='active')?'':'disabled'}>Send Lead to Law Firm</button>
         <small class="send-lead-note">This sends the lead by email and changes the status to Sent to Firm.</small>
       </form>
@@ -172,6 +212,30 @@ async function openLead(id){
         await loadLeads();
       }catch(error){msg.textContent=error.message}
     });
+
+    const assignButton=document.getElementById('assignBestFirmBtn');
+    if(assignButton){
+      assignButton.addEventListener('click',async()=>{
+        const msg=document.getElementById('modalMessage');
+        assignButton.disabled=true;
+        msg.textContent='Finding the best matching firm…';
+        try{
+          const result=await api(`/api/leads/${encodeURIComponent(id)}/assign-best`,{
+            method:'POST',
+            body:'{}'
+          });
+          const select=document.getElementById('assignedFirmSelect');
+          const option=[...select.options].find(item=>Number(item.dataset.firmId||0)===Number(result.firm?.id||0));
+          if(option) select.value=option.value;
+          msg.textContent=result.message||'Best matching firm selected.';
+          await loadLeads();
+        }catch(error){
+          msg.textContent=error.message;
+        }finally{
+          assignButton.disabled=false;
+        }
+      });
+    }
 
     const sendButton=document.getElementById('sendLeadToFirmBtn');
     if(sendButton){
@@ -217,7 +281,7 @@ loginForm.addEventListener('submit',async(e)=>{
   sessionStorage.setItem('claimaxis_admin_token',tokenInput.value);
   showDashboard();
   showLeadView('All Leads');
-  await loadLeads();
+  await Promise.all([loadLeads(),loadAutoAssignment()]);
 });
 logoutBtn.addEventListener('click',()=>{
   sessionStorage.removeItem('claimaxis_admin_token');
@@ -246,6 +310,7 @@ if(token()){
   showDashboard();
   showLeadView('All Leads');
   loadLeads();
+  loadAutoAssignment();
 }else{
   showLogin();
 }

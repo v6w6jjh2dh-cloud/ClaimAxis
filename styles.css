@@ -933,3 +933,10 @@ button:disabled{opacity:.65;cursor:wait}
 /* Phase 4: manual lead assignment */
 .send-lead-note{display:block;color:#7f93a8;font-size:.78rem;line-height:1.5;margin-top:-4px}
 button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none!important}
+
+
+/* Safe auto-assignment controls */
+.automation-control{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 28px;padding:18px 22px;border:1px solid rgba(143,166,190,.25);border-radius:18px;background:rgba(16,39,61,.72)}
+.automation-control>div{display:grid;gap:4px}.automation-control small{color:#e7bd66;letter-spacing:.12em}.automation-control strong{font-size:1.05rem}.automation-control span{color:#aab9c9;font-size:.92rem}
+.toggle-switch{position:relative;display:inline-flex;width:58px;height:32px;flex:0 0 auto}.toggle-switch input{opacity:0;width:0;height:0}.toggle-switch span{position:absolute;inset:0;border-radius:999px;background:#32485b;cursor:pointer;transition:.2s}.toggle-switch span:before{content:"";position:absolute;width:24px;height:24px;left:4px;top:4px;border-radius:50%;background:#fff;transition:.2s}.toggle-switch input:checked+span{background:#d9aa43}.toggle-switch input:checked+span:before{transform:translateX(26px)}.toggle-switch input:disabled+span{opacity:.55;cursor:wait}
+@media(max-width:600px){.automation-control{align-items:flex-start}.automation-control>div{max-width:78%}}
