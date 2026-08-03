@@ -10,6 +10,9 @@ const refreshBtn=document.getElementById('refreshBtn');
 const logoutBtn=document.getElementById('logoutBtn');
 const modal=document.getElementById('leadModal');
 const modalContent=document.getElementById('leadModalContent');
+const dashTitle=document.getElementById('dashTitle');
+const dashEyebrow=document.getElementById('dashEyebrow');
+const dashStats=document.getElementById('dashStats');
 let currentFilter='all';
 let searchTimer;
 let lawFirmsCache=[];
@@ -243,8 +246,7 @@ if(firmRequestsTab){
   firmRequestsTab.addEventListener('click',()=>{
     document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
     firmRequestsTab.classList.add('active');
-    hideAllSections();
-    firmSection.style.display='';
+    showFirmRequestsView();
     loadFirmRequests();
   });
 }
@@ -252,8 +254,7 @@ if(refreshFirmsBtn) refreshFirmsBtn.addEventListener('click',loadFirmRequests);
 
 document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
   button.addEventListener('click',()=>{
-    hideAllSections();
-    if(leadSection) leadSection.style.display='';
+    showLeadView(button.textContent);
   });
 });
 
@@ -274,6 +275,34 @@ function hideAllSections(){
   if(leadSection) leadSection.style.display='none';
   if(firmSection) firmSection.style.display='none';
   if(lawFirmsSection) lawFirmsSection.style.display='none';
+}
+
+function showLeadView(title='All Leads'){
+  hideAllSections();
+  if(leadSection) leadSection.style.display='';
+  if(dashStats) dashStats.style.display='';
+  if(dashTitle) dashTitle.textContent='Lead Dashboard';
+  if(dashEyebrow) dashEyebrow.textContent='CLAIMAXIS PLATFORM';
+  const listTitle=document.getElementById('listTitle');
+  if(listTitle) listTitle.textContent=title;
+}
+
+function showFirmRequestsView(){
+  hideAllSections();
+  if(firmSection) firmSection.style.display='';
+  if(dashStats) dashStats.style.display='none';
+  if(dashTitle) dashTitle.textContent='Firm Requests';
+  if(dashEyebrow) dashEyebrow.textContent='PARTNER PIPELINE';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showLawFirmsView(){
+  hideAllSections();
+  if(lawFirmsSection) lawFirmsSection.style.display='';
+  if(dashStats) dashStats.style.display='none';
+  if(dashTitle) dashTitle.textContent='Law Firms';
+  if(dashEyebrow) dashEyebrow.textContent='PARTNER NETWORK';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function firmStatusLabel(status){
@@ -335,8 +364,7 @@ if(lawFirmsTab){
   lawFirmsTab.addEventListener('click',()=>{
     document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
     lawFirmsTab.classList.add('active');
-    hideAllSections();
-    lawFirmsSection.style.display='';
+    showLawFirmsView();
     loadLawFirms();
   });
 }
