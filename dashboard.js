@@ -13,8 +13,6 @@ const modalContent=document.getElementById('leadModalContent');
 const dashTitle=document.getElementById('dashTitle');
 const dashEyebrow=document.getElementById('dashEyebrow');
 const dashStats=document.getElementById('dashStats');
-const autoAssignmentToggle=document.getElementById('autoAssignmentToggle');
-const autoAssignmentStatus=document.getElementById('autoAssignmentStatus');
 let currentFilter='all';
 let searchTimer;
 let lawFirmsCache=[];
@@ -67,47 +65,6 @@ async function api(url,options={}){
   }
   if(!response.ok||!data.ok)throw new Error(data.error||'Request failed.');
   return data;
-}
-
-
-async function loadAutoAssignmentSetting(){
-  if(!autoAssignmentToggle||!autoAssignmentStatus) return;
-  autoAssignmentStatus.textContent='Checking status…';
-  autoAssignmentToggle.disabled=true;
-  try{
-    const data=await api('/api/settings/auto-assignment');
-    autoAssignmentToggle.checked=Boolean(data.enabled);
-    autoAssignmentStatus.textContent=data.enabled
-      ? 'ON — new matching leads are assigned and emailed automatically.'
-      : 'OFF — every lead stays New until you assign it.';
-  }catch(error){
-    autoAssignmentStatus.textContent=error.message;
-  }finally{
-    autoAssignmentToggle.disabled=false;
-  }
-}
-
-if(autoAssignmentToggle){
-  autoAssignmentToggle.addEventListener('change',async()=>{
-    const enabled=autoAssignmentToggle.checked;
-    autoAssignmentToggle.disabled=true;
-    autoAssignmentStatus.textContent=enabled?'Turning on…':'Turning off…';
-    try{
-      const data=await api('/api/settings/auto-assignment',{
-        method:'PATCH',
-        body:JSON.stringify({enabled})
-      });
-      autoAssignmentToggle.checked=Boolean(data.enabled);
-      autoAssignmentStatus.textContent=data.enabled
-        ? 'ON — new matching leads are assigned and emailed automatically.'
-        : 'OFF — every lead stays New until you assign it.';
-    }catch(error){
-      autoAssignmentToggle.checked=!enabled;
-      autoAssignmentStatus.textContent=error.message;
-    }finally{
-      autoAssignmentToggle.disabled=false;
-    }
-  });
 }
 
 async function loadLeads(){
@@ -196,7 +153,6 @@ async function openLead(id){
           <textarea name="notes" rows="5">${escapeHtml(l.notes||'')}</textarea>
         </label>
         <button class="btn full" type="submit">Save Changes</button>
-        <button class="btn full auto-assign-button" id="autoAssignLeadBtn" type="button">Assign Best Matching Firm</button>
         <button class="btn gold full" id="sendLeadToFirmBtn" type="button" ${lawFirmsCache.some(f=>f.status==='active')?'':'disabled'}>Send Lead to Law Firm</button>
         <small class="send-lead-note">This sends the lead by email and changes the status to Sent to Firm.</small>
       </form>
@@ -216,28 +172,6 @@ async function openLead(id){
         await loadLeads();
       }catch(error){msg.textContent=error.message}
     });
-
-    const autoAssignButton=document.getElementById('autoAssignLeadBtn');
-    if(autoAssignButton){
-      autoAssignButton.addEventListener('click',async()=>{
-        const msg=document.getElementById('modalMessage');
-        autoAssignButton.disabled=true;
-        msg.textContent='Finding the best matching law firm…';
-        try{
-          const result=await api(`/api/leads/${encodeURIComponent(id)}/auto-assign`,{
-            method:'POST',
-            body:'{}'
-          });
-          msg.textContent=result.message||'Lead assigned successfully.';
-          await loadLeads();
-          lawFirmsCache=[];
-          setTimeout(closeModal,1000);
-        }catch(error){
-          msg.textContent=error.message;
-          autoAssignButton.disabled=false;
-        }
-      });
-    }
 
     const sendButton=document.getElementById('sendLeadToFirmBtn');
     if(sendButton){
@@ -283,7 +217,7 @@ loginForm.addEventListener('submit',async(e)=>{
   sessionStorage.setItem('claimaxis_admin_token',tokenInput.value);
   showDashboard();
   showLeadView('All Leads');
-  await Promise.all([loadLeads(),loadAutoAssignmentSetting()]);
+  await loadLeads();
 });
 logoutBtn.addEventListener('click',()=>{
   sessionStorage.removeItem('claimaxis_admin_token');
@@ -292,7 +226,6 @@ logoutBtn.addEventListener('click',()=>{
 refreshBtn.addEventListener('click',()=>{
   if(lawFirmsSection && lawFirmsSection.style.display!=='none') return loadLawFirms();
   if(firmSection && firmSection.style.display!=='none') return loadFirmRequests();
-  loadAutoAssignmentSetting();
   return loadLeads();
 });
 searchInput.addEventListener('input',()=>{
@@ -308,6 +241,15 @@ document.querySelectorAll('.sidebar nav button[data-filter]').forEach(button=>{
     loadLeads();
   });
 });
+
+if(token()){
+  showDashboard();
+  showLeadView('All Leads');
+  loadLeads();
+}else{
+  showLogin();
+}
+
 
 const firmRequestsTab=document.getElementById('firmRequestsTab');
 const firmSection=document.getElementById('firmSection');
@@ -481,18 +423,3 @@ if(lawFirmForm){
     }
   });
 }
-
-
-function initializeDashboard(){
-  if(token()){
-    showDashboard();
-    showLeadView('All Leads');
-    Promise.all([loadLeads(),loadAutoAssignmentSetting()]).catch(error=>{
-      console.error('Dashboard initialization failed:',error);
-    });
-  }else{
-    showLogin();
-  }
-}
-
-initializeDashboard();
