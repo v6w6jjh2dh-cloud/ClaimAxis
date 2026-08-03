@@ -641,6 +641,129 @@ async function listFirmRequests(request, env) {
   });
 }
 
+
+async function listLawFirms(request, env) {
+  if (!isAdmin(request, env)) {
+    return json({ ok: false, error: "Unauthorized." }, 401);
+  }
+
+  const { results } = await env.DB.prepare(`
+    SELECT
+      id,
+      firm_name,
+      contact_name,
+      email,
+      phone,
+      state,
+      city,
+      practice_areas,
+      max_daily_leads,
+      status,
+      created_at
+    FROM law_firms
+    ORDER BY
+      CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END,
+      datetime(created_at) DESC
+    LIMIT 250
+  `).all();
+
+  return json({ ok: true, firms: results || [] });
+}
+
+async function createLawFirm(request, env) {
+  if (!isAdmin(request, env)) {
+    return json({ ok: false, error: "Unauthorized." }, 401);
+  }
+
+  try {
+    const body = await request.json();
+    const firmName = clean(body.firm_name, 180);
+    const contactName = clean(body.contact_name, 120);
+    const email = clean(body.email, 180);
+    const phone = clean(body.phone, 40);
+
+    if (!firmName || !contactName || !email || !phone) {
+      return json({ ok: false, error: "Firm, contact, email, and phone are required." }, 400);
+    }
+    if (!isEmail(email)) {
+      return json({ ok: false, error: "Please enter a valid email." }, 400);
+    }
+
+    const result = await env.DB.prepare(`
+      INSERT INTO law_firms (
+        firm_name, contact_name, email, phone,
+        state, city, practice_areas, max_daily_leads, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      firmName,
+      contactName,
+      email,
+      phone,
+      clean(body.state, 250),
+      clean(body.city, 120),
+      clean(body.practice_areas, 1000),
+      Math.min(Math.max(Number(body.max_daily_leads || 10), 1), 500),
+      clean(body.status || "active", 30)
+    ).run();
+
+    return json({
+      ok: true,
+      firm_id: result.meta?.last_row_id || null,
+      message: "Law firm added."
+    }, 201);
+  } catch (error) {
+    console.error("Create law firm error:", error);
+    return json({ ok: false, error: "Unable to add the law firm." }, 500);
+  }
+}
+
+async function updateLawFirm(request, env, firmId) {
+  if (!isAdmin(request, env)) {
+    return json({ ok: false, error: "Unauthorized." }, 401);
+  }
+
+  const existing = await env.DB.prepare(`
+    SELECT * FROM law_firms WHERE id = ? LIMIT 1
+  `).bind(firmId).first();
+
+  if (!existing) {
+    return json({ ok: false, error: "Law firm not found." }, 404);
+  }
+
+  const body = await request.json();
+  const status = clean(body.status !== undefined ? body.status : existing.status, 30);
+  if (!["active", "pending", "paused", "declined"].includes(status)) {
+    return json({ ok: false, error: "Invalid firm status." }, 400);
+  }
+
+  await env.DB.prepare(`
+    UPDATE law_firms SET
+      firm_name = ?,
+      contact_name = ?,
+      email = ?,
+      phone = ?,
+      state = ?,
+      city = ?,
+      practice_areas = ?,
+      max_daily_leads = ?,
+      status = ?
+    WHERE id = ?
+  `).bind(
+    clean(body.firm_name !== undefined ? body.firm_name : existing.firm_name, 180),
+    clean(body.contact_name !== undefined ? body.contact_name : existing.contact_name, 120),
+    clean(body.email !== undefined ? body.email : existing.email, 180),
+    clean(body.phone !== undefined ? body.phone : existing.phone, 40),
+    clean(body.state !== undefined ? body.state : existing.state, 250),
+    clean(body.city !== undefined ? body.city : existing.city, 120),
+    clean(body.practice_areas !== undefined ? body.practice_areas : existing.practice_areas, 1000),
+    Math.min(Math.max(Number(body.max_daily_leads !== undefined ? body.max_daily_leads : existing.max_daily_leads || 10), 1), 500),
+    status,
+    firmId
+  ).run();
+
+  return json({ ok: true, message: "Law firm updated." });
+}
+
 async function handleApi(request, env, pathname) {
   if (pathname === "/api/health" && request.method === "GET") {
     return health(env);
@@ -678,6 +801,17 @@ async function handleApi(request, env, pathname) {
     if (request.method === "GET") {
       return listFirmRequests(request, env);
     }
+  }
+
+
+  if (pathname === "/api/law-firms") {
+    if (request.method === "GET") return listLawFirms(request, env);
+    if (request.method === "POST") return createLawFirm(request, env);
+  }
+
+  const firmMatch = pathname.match(/^\/api\/law-firms\/(\d+)$/);
+  if (firmMatch && request.method === "PATCH") {
+    return updateLawFirm(request, env, Number(firmMatch[1]));
   }
 
   return json({

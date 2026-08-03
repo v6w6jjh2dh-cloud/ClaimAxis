@@ -917,3 +917,20 @@ button:disabled{opacity:.65;cursor:wait}
   color:#72869a;
   font-size:.68rem;
 }
+
+
+/* Phase 3 — Law Firms */
+.firm-actions{display:flex;gap:10px;align-items:center}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:#dce8f2}
+.empty-firms{padding:34px;border:1px dashed #294157;border-radius:16px;background:rgba(255,255,255,.018);text-align:center;gap:6px;margin:16px 0;color:#8398aa}
+.empty-firms strong{color:#edf4f9;font-size:1.05rem}
+.law-firm-row{grid-template-columns:1.25fr .9fr 1.25fr .55fr .55fr}
+.form-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-help{display:block;margin-top:7px;color:#7f94a7;font-size:.76rem;font-weight:500}
+#lawFirmFormMessage{margin-top:12px;color:#d8ac54;font-weight:700}
+@media(max-width:760px){
+  .firm-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .law-firm-row{grid-template-columns:1.35fr .9fr .8fr}
+  .law-firm-row span:nth-child(3),.law-firm-row span:nth-child(4){display:none}
+  .form-two-col{grid-template-columns:1fr}
+}
