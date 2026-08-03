@@ -6,7 +6,7 @@ const STATUS_VALUES = new Set([
   "signed",
   "closed",
   "rejected"
-]);
+]); 
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
