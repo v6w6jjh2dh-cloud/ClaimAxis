@@ -1,0 +1,19 @@
+CLAIMAXIS PHASE 6 — AUTO ASSIGNMENT
+===================================
+
+قبل رفع الملفات:
+1) Cloudflare > D1 > claimaxis-db > Console
+2) الصق محتوى PHASE6-MIGRATION.sql واضغط Execute مرة واحدة.
+3) ارفع كل ملفات هذه النسخة إلى GitHub واستبدل القديمة.
+4) انتظر Deployment أخضر.
+5) افتح /dashboard ثم ستجد مفتاح Auto Assignment.
+
+الوضع الافتراضي OFF:
+- لا يتم إرسال أي Lead تلقائياً.
+- للتجربة، افتح Lead واضغط Assign Best Matching Firm.
+
+عند تشغيله ON:
+- يختار المكاتب Active فقط.
+- يطابق الولاية ونوع القضية.
+- يحترم Maximum daily leads.
+- إن لم يوجد مكتب مناسب يبقى Lead بحالة New.

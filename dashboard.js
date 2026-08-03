@@ -13,6 +13,8 @@ const modalContent=document.getElementById('leadModalContent');
 const dashTitle=document.getElementById('dashTitle');
 const dashEyebrow=document.getElementById('dashEyebrow');
 const dashStats=document.getElementById('dashStats');
+const autoAssignmentToggle=document.getElementById('autoAssignmentToggle');
+const autoAssignmentStatus=document.getElementById('autoAssignmentStatus');
 let currentFilter='all';
 let searchTimer;
 let lawFirmsCache=[];
@@ -153,6 +155,7 @@ async function openLead(id){
           <textarea name="notes" rows="5">${escapeHtml(l.notes||'')}</textarea>
         </label>
         <button class="btn full" type="submit">Save Changes</button>
+        <button class="btn full" id="autoAssignLeadBtn" type="button">Assign Best Matching Firm</button>
         <button class="btn gold full" id="sendLeadToFirmBtn" type="button" ${lawFirmsCache.some(f=>f.status==='active')?'':'disabled'}>Send Lead to Law Firm</button>
         <small class="send-lead-note">This sends the lead by email and changes the status to Sent to Firm.</small>
       </form>
@@ -172,6 +175,22 @@ async function openLead(id){
         await loadLeads();
       }catch(error){msg.textContent=error.message}
     });
+
+    const autoAssignButton=document.getElementById('autoAssignLeadBtn');
+    if(autoAssignButton){
+      autoAssignButton.addEventListener('click',async()=>{
+        const msg=document.getElementById('modalMessage');
+        autoAssignButton.disabled=true;
+        msg.textContent='Finding the best matching firm…';
+        try{
+          const result=await api(`/api/leads/${encodeURIComponent(id)}/auto-assign`,{method:'POST',body:'{}'});
+          msg.textContent=result.message||'Lead assigned.';
+          await loadLeads();
+          setTimeout(()=>openLead(id),500);
+        }catch(error){msg.textContent=error.message}
+        finally{autoAssignButton.disabled=false}
+      });
+    }
 
     const sendButton=document.getElementById('sendLeadToFirmBtn');
     if(sendButton){
@@ -212,12 +231,46 @@ function closeModal(){
 }
 document.querySelectorAll('[data-close-modal]').forEach(el=>el.addEventListener('click',closeModal));
 
+async function loadAutoAssignmentSetting(){
+  if(!autoAssignmentToggle||!autoAssignmentStatus)return;
+  autoAssignmentStatus.textContent='Checking status…';
+  try{
+    const data=await api('/api/settings/auto-assignment');
+    autoAssignmentToggle.checked=Boolean(data.auto_assignment_enabled);
+    autoAssignmentStatus.textContent=data.auto_assignment_enabled
+      ? 'ON — new matching leads may be sent automatically.'
+      : 'OFF — every lead stays New until you assign it.';
+  }catch(error){
+    autoAssignmentStatus.textContent=error.message;
+  }
+}
+
+if(autoAssignmentToggle){
+  autoAssignmentToggle.addEventListener('change',async()=>{
+    const enabled=autoAssignmentToggle.checked;
+    autoAssignmentToggle.disabled=true;
+    autoAssignmentStatus.textContent='Saving…';
+    try{
+      const data=await api('/api/settings/auto-assignment',{
+        method:'PATCH',
+        body:JSON.stringify({auto_assignment_enabled:enabled})
+      });
+      autoAssignmentStatus.textContent=data.auto_assignment_enabled
+        ? 'ON — new matching leads may be sent automatically.'
+        : 'OFF — every lead stays New until you assign it.';
+    }catch(error){
+      autoAssignmentToggle.checked=!enabled;
+      autoAssignmentStatus.textContent=error.message;
+    }finally{autoAssignmentToggle.disabled=false}
+  });
+}
+
 loginForm.addEventListener('submit',async(e)=>{
   e.preventDefault();
   sessionStorage.setItem('claimaxis_admin_token',tokenInput.value);
   showDashboard();
   showLeadView('All Leads');
-  await loadLeads();
+  await Promise.all([loadLeads(),loadAutoAssignmentSetting()]);
 });
 logoutBtn.addEventListener('click',()=>{
   sessionStorage.removeItem('claimaxis_admin_token');
@@ -246,6 +299,7 @@ if(token()){
   showDashboard();
   showLeadView('All Leads');
   loadLeads();
+  loadAutoAssignmentSetting();
 }else{
   showLogin();
 }
