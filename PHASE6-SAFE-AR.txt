@@ -1,8 +1,0 @@
-ClaimAxis Phase 6 Safe
-
-1) نفذ PHASE6-MIGRATION.sql مرة واحدة في D1 Console.
-2) ارفع كل الملفات إلى GitHub واستبدل القديمة.
-3) انتظر Deployment أخضر.
-4) افتح /dashboard واضغط Refresh.
-5) تأكد أن الليدات القديمة ظاهرة قبل تشغيل Auto Assignment.
-6) اترك Auto Assignment OFF أولاً، واختبر زر Assign Best Matching Firm على Lead تجريبي.
