@@ -320,9 +320,6 @@ async function createLead(request, env) {
       incidentType: clean(body.incident_type, 100)
     });
 
-    // Auto assignment is isolated: any matching/email error is logged but never removes or blocks the saved lead.
-    await autoAssignNewLead(env, publicId);
-
     return json({
       ok: true,
       lead_id: publicId,
@@ -529,7 +526,17 @@ async function updateLead(request, env, publicId) {
     publicId
   ).run();
 
-  return json({ ok: true });
+  // The user reviews and contacts the lead first. Automatic matching only runs
+  // when the lead is newly moved to Qualified and automation is enabled.
+  let autoAssignment = null;
+  if (status === "qualified" && existing.status !== "qualified") {
+    autoAssignment = await autoAssignNewLead(env, publicId);
+  }
+
+  return json({
+    ok: true,
+    auto_assignment: autoAssignment
+  });
 }
 
 

@@ -165,11 +165,20 @@ async function openLead(id){
       const payload=Object.fromEntries(new FormData(e.currentTarget).entries());
       msg.textContent='Saving…';
       try{
-        await api(`/api/leads/${encodeURIComponent(id)}`,{
+        const result=await api(`/api/leads/${encodeURIComponent(id)}`,{
           method:'PATCH',
           body:JSON.stringify(payload)
         });
-        msg.textContent='Changes saved.';
+        const auto=result.auto_assignment;
+        if(auto?.ok && auto?.assigned!==false && auto?.enabled!==false && auto?.message){
+          msg.textContent=`Changes saved. ${auto.message}`;
+        }else if(auto?.enabled===true && auto?.assigned===false){
+          msg.textContent='Changes saved. Lead qualified, but no matching active law firm was available.';
+        }else if(auto?.ok===false){
+          msg.textContent=`Changes saved. Automatic assignment did not complete: ${auto.error||'Unknown error.'}`;
+        }else{
+          msg.textContent='Changes saved.';
+        }
         await loadLeads();
       }catch(error){msg.textContent=error.message}
     });
