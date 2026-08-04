@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="inner fast-intake-page">
+<body class="inner">
   <div class="noise"></div>
   <header class="header"><div class="container nav">
     <a class="brand" href="index.html"><span class="brand-mark">CA</span><span class="brand-name">Claim<span>Axis</span></span></a>
@@ -17,25 +17,33 @@
   </div></header>
 
   <main class="review-page">
-    <section class="review-hero fast-review-hero">
-      <div class="container fast-review-layout">
-        <div class="wizard-panel reveal">
-          <div class="wizard-top"><div><small id="stepLabel">QUICK REVIEW</small><strong id="stepTitle">Contact Details</strong></div><span id="progressPercent">Start</span></div>
+    <section class="review-hero">
+      <div class="container review-layout">
+        <div class="review-copy reveal">
+          <span class="eyebrow">FREE CASE REVIEW</span>
+          <h1>Tell us what happened.</h1>
+          <p>Injured in an accident? Submit a private case review. A ClaimAxis intake representative may call you to verify the details before any information is shared with a participating law firm.</p>
+          <div class="benefits"><div><span>✓</span> No obligation</div><div><span>✓</span> Mobile friendly</div><div><span>✓</span> Fast follow-up</div></div>
+        </div>
+
+        <div class="wizard-panel reveal delay-1">
+          <div class="wizard-top"><div><small id="stepLabel">Quick 30-Second Review</small><strong id="stepTitle">Free Case Review</strong></div><span id="progressPercent">Start</span></div>
           <div class="progress"><i id="progressFill"></i></div>
 
           <form id="intakeForm" novalidate>
-            <section class="form-step active contact-first" data-title="Contact Details">
-              <span class="eyebrow">FREE CASE REVIEW</span>
+            <section class="form-step active" data-title="Free Case Review" data-contact-step="true">
               <h2>Start your free case review</h2>
-              <p class="step-intro">It only takes about 30 seconds.</p>
-              <div class="trust-line"><span>Free</span><span>Confidential</span><span>No obligation</span></div>
-              <label>Full name<input type="text" name="full_name" autocomplete="name" required></label>
-              <label>Phone number<input type="tel" name="phone" autocomplete="tel" inputmode="tel" required></label>
-              <label>State<select name="state" required><option value="New York">New York</option></select></label>
-              <label class="consent"><input type="checkbox" name="initial_consent" required><span>I agree that ClaimAxis may call or text me regarding this inquiry. Message and data rates may apply.</span></label>
+              <p class="quick-review-copy">It only takes about 30 seconds.</p>
+              <div class="quick-trust" aria-label="Free, confidential, no obligation"><span>Free</span><span>Confidential</span><span>No obligation</span></div>
+              <div class="form-grid contact-first-grid">
+                <label>Full name<input type="text" name="full_name" autocomplete="name" required></label>
+                <label>Phone number<input type="tel" name="phone" autocomplete="tel" inputmode="tel" required></label>
+                <label>State<select name="state" required><option value="">Select a state</option><option>New York</option><option>New Jersey</option><option>Connecticut</option><option>Texas</option><option>California</option><option>Florida</option><option>Other</option></select></label>
+                <label>Email <span class="optional-label">(optional)</span><input type="email" name="email" autocomplete="email"></label>
+              </div>
+              <label class="consent"><input id="contactConsent" type="checkbox" name="consent" value="yes" required><span>I agree that ClaimAxis may call or text me regarding this inquiry. Message and data rates may apply.</span></label>
               <p class="fine-print">ClaimAxis is not a law firm. Your information is not automatically sent to a law firm.</p>
             </section>
-
             <section class="form-step" data-title="Qualification">
               <h2>Were you injured in an accident?</h2>
               <div class="choice-grid"><label><input type="radio" name="injured" value="Yes" required><span>Yes</span></label><label><input type="radio" name="injured" value="No"><span>No</span></label></div>
@@ -58,22 +66,18 @@
             <section class="form-step" data-title="Medical Treatment">
               <h2>Did you receive medical treatment?</h2>
               <label>Treatment received<select name="treatment" required><option value="">Select one</option><option>Emergency room</option><option>Ambulance</option><option>Hospital</option><option>Doctor or urgent care</option><option>Chiropractor / physical therapy</option><option>No treatment yet</option></select></label>
-              <label>Describe your injuries (optional)<textarea name="injuries" rows="4"></textarea></label>
+              <label>Describe your injuries <span class="optional-label">(optional)</span><textarea name="injuries" rows="4"></textarea></label>
             </section>
             <section class="form-step" data-title="Attorney Status">
               <h2>Do you already have an attorney?</h2>
               <div class="choice-grid"><label><input type="radio" name="has_attorney" value="No" required><span>No</span></label><label><input type="radio" name="has_attorney" value="Yes"><span>Yes</span></label></div>
               <label>Who appears to be at fault?<select name="fault" required><option value="">Select one</option><option>The other party</option><option>I may be partly at fault</option><option>Not sure</option></select></label>
             </section>
-            <section class="form-step" data-title="Final Details">
-              <h2>Briefly tell us what happened.</h2>
-              <label><textarea name="description" rows="5" required></textarea></label>
-              <div class="form-grid"><label>Email (optional)<input type="email" name="email" autocomplete="email"></label><label>Preferred contact<select name="preferred_contact" required><option value="">Select one</option><option>Phone call</option><option>Text message</option><option>Email</option></select></label></div>
-              <label class="consent"><input type="checkbox" name="final_consent" required><span>I agree that ClaimAxis and a participating law firm may contact me regarding this inquiry.</span></label>
-              <p class="fine-print">ClaimAxis is not a law firm and does not guarantee attorney acceptance or compensation.</p>
+            <section class="form-step" data-title="Incident Details">
+              <h2>Briefly tell us what happened.</h2><label><textarea name="description" rows="6" required></textarea></label>
+              <label>Preferred contact<select name="preferred_contact" required><option value="">Select one</option><option>Phone call</option><option>Text message</option><option>Email</option></select></label>
             </section>
-            <div class="wizard-actions"><button type="button" class="btn back" id="prevBtn">Back</button><button type="button" class="btn gold" id="nextBtn">Get My Free Review</button><button type="submit" class="btn gold" id="submitBtn">Submit Review</button></div>
-            <p class="save-status" id="saveStatus" aria-live="polite"></p>
+            <div class="wizard-actions"><button type="button" class="btn back" id="prevBtn">Back</button><button type="button" class="btn gold" id="nextBtn">Get My Free Review</button><button type="submit" class="btn gold" id="submitBtn">Finish Review</button></div>
           </form>
 
           <div class="success-box" id="successPanel"><div>✓</div><h3>Your request has been received.</h3><p>A ClaimAxis intake representative may call you to verify the accident details. Your information is not automatically sent to a law firm.</p></div>

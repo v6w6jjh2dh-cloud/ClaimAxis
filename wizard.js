@@ -8,27 +8,15 @@ const fill=document.getElementById('progressFill');
 const label=document.getElementById('stepLabel');
 const pct=document.getElementById('progressPercent');
 const title=document.getElementById('stepTitle');
-const saveStatus=document.getElementById('saveStatus');
 let current=0;
-let leadId=sessionStorage.getItem('claimaxis_lead_id')||'';
-let captureBusy=false;
-
-function trackingSource(){
-  const params=new URLSearchParams(window.location.search);
-  const tracking={
-    page:window.location.pathname.split('/').pop()||'injury-help.html',
-    source:params.get('utm_source')||'',medium:params.get('utm_medium')||'',
-    campaign:params.get('utm_campaign')||'',content:params.get('utm_content')||'',
-    term:params.get('utm_term')||'',fbclid:params.get('fbclid')?'yes':'',gclid:params.get('gclid')?'yes':''
-  };
-  return Object.entries(tracking).filter(([,v])=>v).map(([k,v])=>`${k}=${String(v).slice(0,120)}`).join('|').slice(0,500);
-}
+let savedLeadId='';
+let savedPhone='';
 
 function render(){
   steps.forEach((s,i)=>s.classList.toggle('active',i===current));
   const p=Math.round(((current+1)/steps.length)*100);
   fill.style.width=p+'%';
-  label.textContent=current===0?'QUICK REVIEW':`STEP ${current}`;
+  label.textContent=current===0?'Quick 30-Second Review':`Quick Review`;
   pct.textContent=current===0?'Start':p+'%';
   title.textContent=steps[current].dataset.title;
   prevBtn.style.visibility=current===0?'hidden':'visible';
@@ -39,65 +27,111 @@ function render(){
 
 function valid(){
   const fields=[...steps[current].querySelectorAll('input,select,textarea')];
-  for(const f of fields){if(!f.checkValidity()){f.reportValidity();return false;}}
+  for(const f of fields){
+    if(!f.checkValidity()){
+      f.reportValidity();
+      return false;
+    }
+  }
   return true;
 }
 
-function setCaptureBusy(busy){
-  captureBusy=busy;nextBtn.disabled=busy;
-  if(current===0) nextBtn.textContent=busy?'Saving…':'Get My Free Review';
+function trackingSource(){
+  const params=new URLSearchParams(window.location.search);
+  const tracking={
+    page:window.location.pathname.split('/').pop()||'injury-help.html',
+    stage:'contact_saved',
+    source:params.get('utm_source')||'', medium:params.get('utm_medium')||'',
+    campaign:params.get('utm_campaign')||'', content:params.get('utm_content')||'',
+    term:params.get('utm_term')||'', fbclid:params.get('fbclid')?'yes':'', gclid:params.get('gclid')?'yes':''
+  };
+  return Object.entries(tracking).filter(([,v])=>v).map(([k,v])=>`${k}=${String(v).slice(0,120)}`).join('|').slice(0,500);
 }
-function setSubmitting(busy){submitBtn.disabled=busy;submitBtn.textContent=busy?'Submitting…':'Submit Review';}
 
-async function captureContact(){
-  if(leadId) return true;
-  const data=new FormData(form);
-  const payload={
-    full_name:String(data.get('full_name')||'').trim(),
-    phone:String(data.get('phone')||'').trim(),
-    state:String(data.get('state')||'New York').trim(),
-    email:String(data.get('email')||'').trim(),
-    consent:Boolean(data.get('initial_consent')),
+function contactPayload(){
+  const fd=new FormData(form);
+  return {
+    full_name:String(fd.get('full_name')||'').trim(),
+    phone:String(fd.get('phone')||'').trim(),
+    state:String(fd.get('state')||'').trim(),
+    email:String(fd.get('email')||'').trim(),
+    consent:document.getElementById('contactConsent')?.checked===true,
     source_page:trackingSource()
   };
-  setCaptureBusy(true);saveStatus.textContent='Saving your contact details…';
+}
+
+function setSaving(on){
+  nextBtn.disabled=on;
+  nextBtn.textContent=on?'Saving…':'Get My Free Review';
+}
+function setSubmitting(on){
+  submitBtn.disabled=on;
+  submitBtn.textContent=on?'Submitting…':'Finish Review';
+}
+
+async function saveContactFirst(){
+  setSaving(true);
   try{
+    const payload=contactPayload();
     const response=await fetch('/api/leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
-    const result=await response.json();
-    if(!response.ok||!result.ok) throw new Error(result.error||'Unable to save your details.');
-    leadId=result.lead_id;sessionStorage.setItem('claimaxis_lead_id',leadId);
-    saveStatus.textContent='Your contact details are saved.';
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.ok) throw new Error(result.error||'Unable to save your information.');
+    savedLeadId=result.lead_id;
+    savedPhone=payload.phone;
+    sessionStorage.setItem('claimaxis_lead_id',savedLeadId);
+    sessionStorage.setItem('claimaxis_lead_phone',savedPhone);
     return true;
   }catch(error){
-    saveStatus.textContent='';alert(error.message||'Unable to save. Please try again.');return false;
-  }finally{setCaptureBusy(false);}
+    alert(error.message||'Unable to save. Please try again.');
+    return false;
+  }finally{setSaving(false)}
 }
 
 nextBtn.onclick=async()=>{
-  if(captureBusy||!valid()||current>=steps.length-1) return;
-  if(current===0){const saved=await captureContact();if(!saved)return;}
-  current++;render();
+  if(!valid()||current>=steps.length-1) return;
+  if(current===0&&!savedLeadId){
+    const saved=await saveContactFirst();
+    if(!saved) return;
+  }
+  current++;
+  render();
   document.querySelector('.wizard-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
 };
-prevBtn.onclick=()=>{if(current>0){current--;render();}};
+prevBtn.onclick=()=>{if(current>0){current--;render()}};
 
 form.onsubmit=async(e)=>{
-  e.preventDefault();if(!valid())return;
-  if(!leadId){const saved=await captureContact();if(!saved)return;}
+  e.preventDefault();
+  if(!valid()) return;
+  if(!savedLeadId){
+    savedLeadId=sessionStorage.getItem('claimaxis_lead_id')||'';
+    savedPhone=sessionStorage.getItem('claimaxis_lead_phone')||'';
+  }
+  if(!savedLeadId){
+    alert('Please return to the first step and save your contact details.');
+    return;
+  }
   setSubmitting(true);
   const fd=new FormData(form);
   const payload=Object.fromEntries(fd.entries());
-  payload.consent=Boolean(fd.get('final_consent'));
-  payload.source_page=trackingSource();
+  payload.phone_match=savedPhone||String(fd.get('phone')||'').trim();
+  payload.consent=document.getElementById('contactConsent')?.checked===true;
   try{
-    const response=await fetch(`/api/leads/${encodeURIComponent(leadId)}/intake`,{
-      method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify(payload)
+    const response=await fetch(`/api/leads/${encodeURIComponent(savedLeadId)}/complete`,{
+      method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)
     });
-    const result=await response.json();
-    if(!response.ok||!result.ok) throw new Error(result.error||'Unable to submit your inquiry.');
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.ok) throw new Error(result.error||'Unable to complete your inquiry.');
     sessionStorage.removeItem('claimaxis_lead_id');
-    form.style.display='none';success.style.display='block';
-    const idLine=document.createElement('p');idLine.className='submission-reference';idLine.textContent=`Reference: ${leadId}`;success.appendChild(idLine);
-  }catch(error){alert(error.message||'Unable to submit. Please try again.');setSubmitting(false);}
+    sessionStorage.removeItem('claimaxis_lead_phone');
+    form.style.display='none';
+    success.style.display='block';
+    const idLine=document.createElement('p');
+    idLine.className='submission-reference';
+    idLine.textContent=`Reference: ${savedLeadId}`;
+    success.appendChild(idLine);
+  }catch(error){
+    alert(error.message||'Unable to submit. Please try again.');
+    setSubmitting(false);
+  }
 };
 render();

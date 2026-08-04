@@ -143,15 +143,12 @@ async function sendLeadEmails(env, lead) {
       <p style="color:#6b7280;font-size:13px">Submitting an inquiry does not create an attorney-client relationship and does not guarantee representation.</p>
     </div>`;
 
-  const messages = [
-    sendEmail(env, {
-      to: adminEmail,
-      subject: `New Lead: ${lead.fullName} (${lead.publicId})`,
-      html: adminHtml,
-      replyTo: lead.email || undefined
-    })
-  ];
-
+  const messages = [sendEmail(env, {
+    to: adminEmail,
+    subject: `New Lead: ${lead.fullName} (${lead.publicId})`,
+    html: adminHtml,
+    replyTo: lead.email || undefined
+  })];
   if (lead.email) {
     messages.push(sendEmail(env, {
       to: lead.email,
@@ -159,7 +156,6 @@ async function sendLeadEmails(env, lead) {
       html: customerHtml
     }));
   }
-
   return Promise.allSettled(messages);
 }
 
@@ -244,10 +240,10 @@ async function createLead(request, env) {
     const email = clean(body.email, 180);
     const consent = body.consent === true;
 
-    if (!fullName || !phone || !clean(body.state, 100)) {
+    if (!fullName || !phone) {
       return json({
         ok: false,
-        error: "Name, phone, and state are required."
+        error: "Name and phone are required."
       }, 400);
     }
 
@@ -340,38 +336,36 @@ async function createLead(request, env) {
   }
 }
 
-
-async function updatePublicIntake(request, env, publicId) {
+async function completeLeadIntake(request, env, publicId) {
   try {
     const body = await request.json();
+    const phoneMatch = clean(body.phone_match, 40);
+    if (!phoneMatch) return json({ ok:false, error:"Phone verification is required." }, 400);
+
     const existing = await env.DB.prepare(`
-      SELECT public_id FROM leads WHERE public_id = ? LIMIT 1
+      SELECT phone FROM leads WHERE public_id = ? LIMIT 1
     `).bind(publicId).first();
-
-    if (!existing) return json({ ok:false, error:"Lead not found." }, 404);
-
-    const email = clean(body.email, 180);
-    if (email && !isEmail(email)) return json({ ok:false, error:"Please enter a valid email." }, 400);
-    if (body.consent !== true) return json({ ok:false, error:"Consent is required." }, 400);
+    if (!existing || clean(existing.phone,40) !== phoneMatch) {
+      return json({ ok:false, error:"This intake session could not be verified." }, 403);
+    }
 
     await env.DB.prepare(`
       UPDATE leads SET
-        injured = ?, incident_type = ?, state = ?, accident_date = ?,
-        treatment = ?, injuries = ?, has_attorney = ?, fault = ?,
-        description = ?, email = ?, preferred_contact = ?, consent = 1,
-        source_page = ?, updated_at = datetime('now')
+        injured = ?, incident_type = ?, state = ?, accident_date = ?, treatment = ?,
+        injuries = ?, has_attorney = ?, fault = ?, description = ?,
+        email = ?, preferred_contact = ?, consent = ?, updated_at = datetime('now')
       WHERE public_id = ?
     `).bind(
       clean(body.injured,20), clean(body.incident_type,100), clean(body.state,100),
       clean(body.accident_date,30), clean(body.treatment,150), clean(body.injuries,2500),
       clean(body.has_attorney,20), clean(body.fault,120), clean(body.description,5000),
-      email, clean(body.preferred_contact,50), clean(body.source_page,500), publicId
+      clean(body.email,180), clean(body.preferred_contact,50), body.consent===true?1:0, publicId
     ).run();
 
-    return json({ ok:true, lead_id:publicId, message:"Your inquiry was updated." });
+    return json({ ok:true, lead_id:publicId, message:"Your inquiry was completed." });
   } catch (error) {
-    console.error("Public intake update error:", error);
-    return json({ ok:false, error:"Unable to update the lead." }, 500);
+    console.error("Complete lead error:", error);
+    return json({ ok:false, error:"Unable to complete the lead." }, 500);
   }
 }
 
@@ -1140,9 +1134,9 @@ async function handleApi(request, env, pathname) {
     return sendLeadToFirm(request, env, decodeURIComponent(sendLeadMatch[1]));
   }
 
-  const publicIntakeMatch = pathname.match(/^\/api\/leads\/([^/]+)\/intake$/);
-  if (publicIntakeMatch && request.method === "PATCH") {
-    return updatePublicIntake(request, env, decodeURIComponent(publicIntakeMatch[1]));
+  const completeLeadMatch = pathname.match(/^\/api\/leads\/([^/]+)\/complete$/);
+  if (completeLeadMatch && request.method === "POST") {
+    return completeLeadIntake(request, env, decodeURIComponent(completeLeadMatch[1]));
   }
 
   const leadMatch = pathname.match(/^\/api\/leads\/([^/]+)$/);

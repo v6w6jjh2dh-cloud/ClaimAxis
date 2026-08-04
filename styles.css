@@ -942,22 +942,13 @@ button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none!important}
 @media(max-width:640px){.automation-control{align-items:flex-start}.automation-control span{font-size:.92rem}}
 
 
-/* Fast lead capture landing page */
-.fast-review-hero{padding:38px 0 70px}
-.fast-review-layout{max-width:820px;margin:0 auto}
-.fast-intake-page .wizard-panel{padding:26px 28px}
-.fast-intake-page .form-step h2{margin:12px 0 8px;font-size:clamp(2rem,7vw,3rem)}
-.step-intro{margin:0 0 14px;color:#aebdcc;font-size:1.02rem}
-.trust-line{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
-.trust-line span{padding:7px 10px;border:1px solid rgba(255,255,255,.1);border-radius:999px;color:#d2dce6;font-size:.78rem}
-.contact-first label:not(.consent){margin-bottom:14px}
-.contact-first input,.contact-first select{padding:15px}
-.save-status{min-height:20px;margin:10px 0 0;text-align:right;color:#77d6aa;font-size:.82rem}
-@media(max-width:700px){
-  .fast-review-hero{padding:18px 0 36px}
-  .fast-review-layout{width:min(100% - 18px,820px)}
-  .fast-intake-page .wizard-panel{padding:22px 18px;border-radius:22px}
-  .fast-intake-page .header .container{padding-left:14px;padding-right:14px}
-  .fast-intake-page .form-grid{grid-template-columns:1fr}
-  .fast-intake-page .wizard-actions .btn{padding:14px 16px}
-}
+/* Fast lead capture + business contact */
+.quick-review-copy{margin:-4px 0 12px;color:#aebdcc;font-size:1.02rem}
+.quick-trust{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px}
+.quick-trust span{padding:6px 10px;border:1px solid rgba(239,201,121,.23);border-radius:999px;color:var(--gold2);background:rgba(201,155,69,.07);font-size:.78rem;font-weight:800}
+.optional-label{font-weight:500;color:#8295a8;font-size:.85em}
+.contact-first-grid{grid-template-columns:1fr 1fr}
+.business-contact{display:grid;gap:11px;margin-top:18px}
+.business-contact a{display:flex!important;align-items:flex-start;gap:10px;color:#cbd7e3!important;margin:0!important;font-size:.96rem!important;line-height:1.45}
+.business-contact .contact-icon{color:var(--gold2);font-size:1.15rem;flex:0 0 auto}
+@media(max-width:620px){.contact-first-grid{grid-template-columns:1fr}.quick-trust{gap:6px}.quick-trust span{font-size:.72rem}}
