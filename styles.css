@@ -980,3 +980,5 @@ button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none!important}
   .quick-review-copy h1{font-size:1.75rem}
   .quick-wizard-panel{padding:16px 13px}
 }
+
+.privacy-reassurance{margin:12px 0 0;color:#dbe8f3;font-size:.9rem;font-weight:700;text-align:center}

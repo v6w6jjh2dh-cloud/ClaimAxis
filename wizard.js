@@ -22,7 +22,7 @@ function render(){
   prevBtn.style.visibility=current===0?'hidden':'visible';
   nextBtn.style.display=current===steps.length-1?'none':'inline-flex';
   submitBtn.style.display=current===steps.length-1?'inline-flex':'none';
-  if(current===0) nextBtn.textContent=capturedLeadId?'Continue':'Start My Free Review';
+  if(current===0) nextBtn.textContent=capturedLeadId?'Continue':'Get My Free Review';
   else nextBtn.textContent='Continue';
 }
 
@@ -87,7 +87,7 @@ nextBtn.onclick=async()=>{
   if(!valid()||current>=steps.length-1) return;
 
   if(current===0&&!capturedLeadId){
-    const normal='Start My Free Review';
+    const normal='Get My Free Review';
     setButtonBusy(nextBtn,true,'Saving…',normal);
     try{
       await captureContact();
