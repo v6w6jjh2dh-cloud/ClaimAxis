@@ -306,7 +306,7 @@ async function createLead(request, env) {
       email,
       clean(body.preferred_contact, 50),
       1,
-      "case-review",
+      clean(body.source_page, 500) || "case-review",
       ipHash,
       userAgent
     ).run();

@@ -130,6 +130,7 @@ async function openLead(id){
         <div><small>Treatment</small><strong>${escapeHtml(l.treatment||'—')}</strong></div>
         <div><small>Has Attorney</small><strong>${escapeHtml(l.has_attorney||'—')}</strong></div>
         <div><small>Fault</small><strong>${escapeHtml(l.fault||'—')}</strong></div>
+        <div><small>Lead source</small><strong>${escapeHtml(l.source_page||'Direct / unknown')}</strong></div>
       </div>
 
       <div class="lead-long-text"><small>Injuries</small><p>${escapeHtml(l.injuries||'—')}</p></div>

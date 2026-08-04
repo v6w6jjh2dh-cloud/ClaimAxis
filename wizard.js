@@ -56,6 +56,24 @@ form.onsubmit=async(e)=>{
   const payload=Object.fromEntries(formData.entries());
   payload.consent=Boolean(form.querySelector('.consent input[type="checkbox"]')?.checked);
 
+  // Capture the campaign that brought the visitor without using extra database columns.
+  const params=new URLSearchParams(window.location.search);
+  const tracking={
+    page:window.location.pathname.split('/').pop()||'case-review.html',
+    source:params.get('utm_source')||'',
+    medium:params.get('utm_medium')||'',
+    campaign:params.get('utm_campaign')||'',
+    content:params.get('utm_content')||'',
+    term:params.get('utm_term')||'',
+    fbclid:params.get('fbclid')?'yes':'',
+    gclid:params.get('gclid')?'yes':''
+  };
+  payload.source_page=Object.entries(tracking)
+    .filter(([,value])=>value)
+    .map(([key,value])=>`${key}=${String(value).slice(0,120)}`)
+    .join('|')
+    .slice(0,500);
+
   try{
     const response=await fetch('/api/leads',{
       method:'POST',
