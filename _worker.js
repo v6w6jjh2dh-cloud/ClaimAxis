@@ -148,11 +148,11 @@ async function sendLeadEmails(env, lead) {
       to: adminEmail,
       subject: `New Lead: ${lead.fullName} (${lead.publicId})`,
       html: adminHtml,
-      replyTo: isEmail(lead.email) ? lead.email : undefined
+      replyTo: lead.email || undefined
     })
   ];
 
-  if (isEmail(lead.email)) {
+  if (lead.email) {
     messages.push(sendEmail(env, {
       to: lead.email,
       subject: `ClaimAxis received your inquiry — ${lead.publicId}`,
@@ -231,38 +231,48 @@ async function health(env) {
 async function createLead(request, env) {
   try {
     if (!env.DB) {
-      return json({ ok: false, error: "Database binding DB is missing." }, 500);
+      return json({
+        ok: false,
+        error: "Database binding DB is missing."
+      }, 500);
     }
 
     const body = await request.json();
-    const isContactCapture = body.capture_stage === "contact";
+
     const fullName = clean(body.full_name, 120);
     const phone = clean(body.phone, 40);
-    const suppliedEmail = clean(body.email, 180);
+    const email = clean(body.email, 180);
     const consent = body.consent === true;
 
-    if (!fullName || !phone) {
-      return json({ ok: false, error: "Name and phone are required." }, 400);
+    if (!fullName || !phone || !clean(body.state, 100)) {
+      return json({
+        ok: false,
+        error: "Name, phone, and state are required."
+      }, 400);
     }
 
-    if (suppliedEmail && !isEmail(suppliedEmail)) {
-      return json({ ok: false, error: "Please enter a valid email or leave it blank." }, 400);
-    }
-
-    if (!isContactCapture && !suppliedEmail) {
-      return json({ ok: false, error: "Email is required." }, 400);
+    if (email && !isEmail(email)) {
+      return json({
+        ok: false,
+        error: "Please enter a valid email."
+      }, 400);
     }
 
     if (!consent) {
-      return json({ ok: false, error: "Consent is required." }, 400);
+      return json({
+        ok: false,
+        error: "Consent is required."
+      }, 400);
     }
 
     const publicId = makePublicId("L");
-    const captureToken = isContactCapture ? randomToken() : "";
-    const email = suppliedEmail || `${publicId.toLowerCase()}@pending.claimaxis.invalid`;
-    const clientIp = request.headers.get("CF-Connecting-IP") || "";
+    const clientIp =
+      request.headers.get("CF-Connecting-IP") || "";
     const ipHash = await hash(clientIp);
-    const userAgent = clean(request.headers.get("user-agent"), 500);
+    const userAgent = clean(
+      request.headers.get("user-agent"),
+      500
+    );
 
     await env.DB.prepare(`
       INSERT INTO leads (
@@ -283,9 +293,8 @@ async function createLead(request, env) {
         consent,
         source_page,
         ip_hash,
-        user_agent,
-        firm_secure_token
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        user_agent
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       publicId,
       clean(body.injured, 20),
@@ -304,26 +313,8 @@ async function createLead(request, env) {
       1,
       clean(body.source_page, 500) || "case-review",
       ipHash,
-      userAgent,
-      captureToken || null
+      userAgent
     ).run();
-
-    if (isContactCapture) {
-      const adminEmail = env.NOTIFICATION_EMAIL || "claimaxis.business@gmail.com";
-      await sendEmail(env, {
-        to: adminEmail,
-        subject: `New Contact Captured: ${fullName} (${publicId})`,
-        html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0b1b2b"><h2>New ClaimAxis Contact</h2><p>The visitor submitted contact details and may still be completing the questionnaire.</p><p><strong>Reference:</strong> ${emailEscape(publicId)}</p><p><strong>Name:</strong> ${emailEscape(fullName)}</p><p><strong>Phone:</strong> ${emailEscape(phone)}</p><p><strong>Email:</strong> ${emailEscape(suppliedEmail || "Not provided")}</p><p><strong>State:</strong> ${emailEscape(clean(body.state,100) || "—")}</p><p><a href="https://claimaxis.com/dashboard.html">Open Dashboard</a></p></div>`,
-        replyTo: suppliedEmail || undefined
-      });
-
-      return json({
-        ok: true,
-        lead_id: publicId,
-        capture_token: captureToken,
-        message: "Your contact details were saved."
-      }, 201);
-    }
 
     await sendLeadEmails(env, {
       publicId,
@@ -334,89 +325,53 @@ async function createLead(request, env) {
       incidentType: clean(body.incident_type, 100)
     });
 
-    return json({ ok: true, lead_id: publicId, message: "Your inquiry was received." }, 201);
+    return json({
+      ok: true,
+      lead_id: publicId,
+      message: "Your inquiry was received."
+    }, 201);
   } catch (error) {
     console.error("Create lead error:", error);
-    return json({ ok: false, error: "Unable to save the lead." }, 500);
+
+    return json({
+      ok: false,
+      error: "Unable to save the lead."
+    }, 500);
   }
 }
 
-async function completePublicIntake(request, env, publicId) {
-  try {
-    if (!env.DB) return json({ ok:false, error:"Database binding DB is missing." },500);
-    const body = await request.json();
-    const captureToken = clean(body.capture_token, 128);
-    if (!captureToken) return json({ ok:false, error:"Your secure session is missing." },400);
 
+async function updatePublicIntake(request, env, publicId) {
+  try {
+    const body = await request.json();
     const existing = await env.DB.prepare(`
-      SELECT public_id, full_name, phone, email, firm_secure_token
-      FROM leads
-      WHERE public_id = ?
-      LIMIT 1
+      SELECT public_id FROM leads WHERE public_id = ? LIMIT 1
     `).bind(publicId).first();
 
-    if (!existing || !existing.firm_secure_token || existing.firm_secure_token !== captureToken) {
-      return json({ ok:false, error:"This review session is invalid or expired." },403);
-    }
+    if (!existing) return json({ ok:false, error:"Lead not found." }, 404);
 
-    const fullName = clean(body.full_name || existing.full_name,120);
-    const phone = clean(body.phone || existing.phone,40);
-    const suppliedEmail = clean(body.email,180);
-    const email = suppliedEmail || existing.email;
-    if (suppliedEmail && !isEmail(suppliedEmail)) {
-      return json({ ok:false, error:"Please enter a valid email or leave it blank." },400);
-    }
+    const email = clean(body.email, 180);
+    if (email && !isEmail(email)) return json({ ok:false, error:"Please enter a valid email." }, 400);
+    if (body.consent !== true) return json({ ok:false, error:"Consent is required." }, 400);
 
     await env.DB.prepare(`
       UPDATE leads SET
-        injured = ?,
-        incident_type = ?,
-        state = ?,
-        accident_date = ?,
-        treatment = ?,
-        injuries = ?,
-        has_attorney = ?,
-        fault = ?,
-        description = ?,
-        full_name = ?,
-        phone = ?,
-        email = ?,
-        preferred_contact = ?,
-        consent = 1,
-        source_page = ?,
-        updated_at = datetime('now')
+        injured = ?, incident_type = ?, state = ?, accident_date = ?,
+        treatment = ?, injuries = ?, has_attorney = ?, fault = ?,
+        description = ?, email = ?, preferred_contact = ?, consent = 1,
+        source_page = ?, updated_at = datetime('now')
       WHERE public_id = ?
     `).bind(
-      clean(body.injured,20),
-      clean(body.incident_type,100),
-      clean(body.state,100),
-      clean(body.accident_date,30),
-      clean(body.treatment,150),
-      clean(body.injuries,2500),
-      clean(body.has_attorney,20),
-      clean(body.fault,120),
-      clean(body.description,5000),
-      fullName,
-      phone,
-      email,
-      clean(body.preferred_contact,50),
-      clean(body.source_page,500) || "injury-help.html|stage=completed",
-      publicId
+      clean(body.injured,20), clean(body.incident_type,100), clean(body.state,100),
+      clean(body.accident_date,30), clean(body.treatment,150), clean(body.injuries,2500),
+      clean(body.has_attorney,20), clean(body.fault,120), clean(body.description,5000),
+      email, clean(body.preferred_contact,50), clean(body.source_page,500), publicId
     ).run();
 
-    await sendLeadEmails(env, {
-      publicId,
-      fullName,
-      phone,
-      email: suppliedEmail || "Not provided",
-      state: clean(body.state,100),
-      incidentType: clean(body.incident_type,100)
-    });
-
-    return json({ ok:true, lead_id:publicId, message:"Your review was completed." });
+    return json({ ok:true, lead_id:publicId, message:"Your inquiry was updated." });
   } catch (error) {
-    console.error("Complete intake error:", error);
-    return json({ ok:false, error:"Unable to complete the review." },500);
+    console.error("Public intake update error:", error);
+    return json({ ok:false, error:"Unable to update the lead." }, 500);
   }
 }
 
@@ -1175,12 +1130,6 @@ async function handleApi(request, env, pathname) {
     return autoAssignmentSetting(request, env);
   }
 
-
-  const publicIntakeMatch = pathname.match(/^\/api\/leads\/([^/]+)\/intake$/);
-  if (publicIntakeMatch && request.method === "PATCH") {
-    return completePublicIntake(request, env, decodeURIComponent(publicIntakeMatch[1]));
-  }
-
   const assignBestMatch = pathname.match(/^\/api\/leads\/([^/]+)\/assign-best-firm$/);
   if (assignBestMatch && request.method === "POST") {
     return assignBestFirm(request, env, decodeURIComponent(assignBestMatch[1]));
@@ -1189,6 +1138,11 @@ async function handleApi(request, env, pathname) {
   const sendLeadMatch = pathname.match(/^\/api\/leads\/([^/]+)\/send-to-firm$/);
   if (sendLeadMatch && request.method === "POST") {
     return sendLeadToFirm(request, env, decodeURIComponent(sendLeadMatch[1]));
+  }
+
+  const publicIntakeMatch = pathname.match(/^\/api\/leads\/([^/]+)\/intake$/);
+  if (publicIntakeMatch && request.method === "PATCH") {
+    return updatePublicIntake(request, env, decodeURIComponent(publicIntakeMatch[1]));
   }
 
   const leadMatch = pathname.match(/^\/api\/leads\/([^/]+)$/);
