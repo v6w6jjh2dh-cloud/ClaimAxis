@@ -16,7 +16,7 @@ function render(){
   steps.forEach((s,i)=>s.classList.toggle('active',i===current));
   const p=Math.round(((current+1)/steps.length)*100);
   fill.style.width=p+'%';
-  label.textContent=`Step ${current+1} of ${steps.length}`;
+  label.textContent='';
   pct.textContent=p+'%';
   title.textContent=steps[current].dataset.title;
   prevBtn.style.visibility=current===0?'hidden':'visible';
