@@ -1,116 +1,105 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Free Case Review | ClaimAxis</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Free Case Review | ClaimAxis</title>
+<link href="favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="styles.css" rel="stylesheet"/>
 </head>
 <body class="inner quick-intake-page">
-  <div class="noise"></div>
-  <header class="header"><div class="container nav">
-    <a class="brand" href="index.html"><span class="brand-mark">CA</span><span class="brand-name">Claim<span>Axis</span></span></a>
-    <div class="nav-actions"><details class="language-menu"><summary><span class="language-flag" aria-hidden="true">🇺🇸</span><span>English</span><span class="language-chevron" aria-hidden="true">⌄</span></summary><div class="language-options"><a class="active" href="injury-help.html"><span aria-hidden="true">🇺🇸</span><span>English</span></a><a href="injury-help-es.html"><span aria-hidden="true">🇪🇸</span><span>Español</span></a></div></details><a class="pill" href="get-leads.html">For Law Firms</a></div>
-  </div></header>
-
-  <main class="review-page">
-    <section class="review-hero quick-review-hero">
-      <div class="container review-layout quick-review-layout">
-        <div class="review-copy quick-review-copy reveal">
-          <span class="eyebrow">FREE ACCIDENT CASE REVIEW</span>
-          <h1>Find out if your case may qualify.</h1>
-          <p>Start with your contact details. It takes less than 30 seconds, and our intake team may call you promptly.</p>
-          <div class="benefits compact-benefits"><div><span>✓</span> Free case review</div><div><span>✓</span> Private and confidential</div><div><span>✓</span> Fast follow-up</div></div>
-        </div>
-
-        <div class="wizard-panel quick-wizard-panel reveal delay-1">
-          <div class="wizard-top"><div><strong id="stepTitle">Contact Details</strong></div><span id="progressPercent">14%</span></div>
-          <div class="progress"><i id="progressFill"></i></div>
-
-          <form id="intakeForm" novalidate>
-            <section class="form-step active contact-capture-step" data-title="Contact Details">
-              <h2>Start your free case review</h2>
-              <p class="step-subtitle">Enter your details first so we can contact you even if you do not finish every question.</p>
-              <div class="form-grid quick-contact-grid">
-                <label>Full name<input type="text" name="full_name" autocomplete="name" required></label>
-                <label>Phone number<input type="tel" name="phone" autocomplete="tel" inputmode="tel" required></label>
-                <label>State<select name="state" required><option value="">Select a state</option><option selected>New York</option><option>New Jersey</option><option>Connecticut</option><option>Other</option></select></label>
-                <label>Email <small>(optional)</small><input type="email" name="email" autocomplete="email"></label>
-              </div>
-              <label class="consent quick-consent"><input type="checkbox" name="contact_consent" required><span>I agree that ClaimAxis may call or text me regarding this inquiry. Message and data rates may apply.</span></label>
-              <p class="fine-print">ClaimAxis is not a law firm. Your information is not automatically sent to a law firm.</p>
-            </section>
-
-            <section class="form-step" data-title="Injury">
-              <h2>Were you injured in the accident?</h2>
-              <div class="choice-grid"><label><input type="radio" name="injured" value="Yes" required><span>Yes</span></label><label><input type="radio" name="injured" value="No"><span>No</span></label></div>
-            </section>
-
-            <section class="form-step" data-title="Incident Type">
-              <h2>What type of incident was it?</h2>
-              <div class="choice-grid two">
-                <label><input type="radio" name="incident_type" value="Car Accident" required><span>Car Accident</span></label>
-                <label><input type="radio" name="incident_type" value="Truck Accident"><span>Truck Accident</span></label>
-                <label><input type="radio" name="incident_type" value="Motorcycle Accident"><span>Motorcycle</span></label>
-                <label><input type="radio" name="incident_type" value="Uber/Lyft"><span>Uber / Lyft</span></label>
-                <label><input type="radio" name="incident_type" value="Pedestrian"><span>Pedestrian</span></label>
-                <label><input type="radio" name="incident_type" value="Other"><span>Other</span></label>
-              </div>
-            </section>
-
-            <section class="form-step" data-title="Date">
-              <h2>When did it happen?</h2>
-              <label>Accident date<input type="date" name="accident_date" required></label>
-            </section>
-
-            <section class="form-step" data-title="Treatment">
-              <h2>Did you receive medical treatment?</h2>
-              <label>Treatment received<select name="treatment" required><option value="">Select one</option><option>Emergency room</option><option>Ambulance</option><option>Hospital</option><option>Doctor or urgent care</option><option>Chiropractor / physical therapy</option><option>No treatment yet</option></select></label>
-              <label>Describe your injuries <small>(optional)</small><textarea name="injuries" rows="3"></textarea></label>
-            </section>
-
-            <section class="form-step" data-title="Attorney Status">
-              <h2>Do you already have an attorney?</h2>
-              <div class="choice-grid"><label><input type="radio" name="has_attorney" value="No" required><span>No</span></label><label><input type="radio" name="has_attorney" value="Yes"><span>Yes</span></label></div>
-              <label>Who appears to be at fault?<select name="fault" required><option value="">Select one</option><option>The other party</option><option>I may be partly at fault</option><option>Not sure</option></select></label>
-            </section>
-
-            <section class="form-step" data-title="Final Details">
-              <h2>Briefly tell us what happened.</h2>
-              <label><textarea name="description" rows="5" required></textarea></label>
-              <label>Preferred contact<select name="preferred_contact" required><option value="">Select one</option><option>Phone call</option><option>Text message</option><option>Email</option></select></label>
-              <p class="fine-print">Submitting an inquiry does not create an attorney-client relationship and does not guarantee representation or compensation.</p>
-            </section>
-
-            <div class="wizard-actions"><button type="button" class="btn back" id="prevBtn">Back</button><button type="button" class="btn gold" id="nextBtn">Start My Free Review</button><button type="submit" class="btn gold" id="submitBtn">Complete My Review</button></div>
-          </form>
-
-          <div class="success-box" id="successPanel"><div>✓</div><h3>Your review is complete.</h3><p>A ClaimAxis intake representative may call you to verify the accident details. Your information is not automatically sent to a law firm.</p></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="office-location-section">
-      <div class="container office-location-grid">
-        <div class="office-location-copy">
-          <span class="eyebrow">OUR NEW YORK OFFICE</span>
-          <h2>Located in the heart of Manhattan.</h2>
-          <p>ClaimAxis maintains a professional business presence at this New York address.</p>
-          <a class="office-address-link" href="https://www.google.com/maps/search/?api=1&query=276+5th+Avenue+Suite+704+New+York+NY+10001" target="_blank" rel="noopener">
-            <span class="location-pin" aria-hidden="true">📍</span>
-            <span><strong>276 5th Avenue, Suite 704</strong><small>New York, NY 10001</small></span>
-          </a>
-          <a class="btn outline map-button" href="https://www.google.com/maps/search/?api=1&query=276+5th+Avenue+Suite+704+New+York+NY+10001" target="_blank" rel="noopener">View on Google Maps</a>
-        </div>
-        <div class="office-map-wrap">
-          <iframe title="ClaimAxis New York office location" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=276%205th%20Avenue%20Suite%20704%20New%20York%20NY%2010001&output=embed"></iframe>
-        </div>
-      </div>
-    </section>
-  </main>
-  <script src="wizard.js"></script><script src="main.js"></script>
+<div class="noise"></div>
+<header class="header"><div class="container nav">
+<a class="brand" href="index.html"><span class="brand-mark">CA</span><span class="brand-name">Claim<span>Axis</span></span></a>
+<div class="nav-actions"><details class="language-menu"><summary><span aria-hidden="true" class="language-flag">🇺🇸</span><span>English</span><span aria-hidden="true" class="language-chevron">⌄</span></summary><div class="language-options"><a class="active" href="injury-help.html"><span aria-hidden="true">🇺🇸</span><span>English</span></a><a href="injury-help-es.html"><span aria-hidden="true">🇪🇸</span><span>Español</span></a></div></details><a class="pill" href="get-leads.html">For Law Firms</a></div>
+</div></header>
+<main class="review-page">
+<section class="review-hero quick-review-hero">
+<div class="container review-layout quick-review-layout">
+<div class="review-copy quick-review-copy reveal">
+<span class="eyebrow">FREE ACCIDENT CASE REVIEW</span>
+<h1>Find out if your case may qualify.</h1>
+<p>Start with your contact details. It takes less than 30 seconds, and our intake team may call you promptly.</p>
+<div class="benefits compact-benefits"><div><span>✓</span> Free case review</div><div><span>✓</span> Private and confidential</div><div><span>✓</span> Fast follow-up</div></div>
+</div>
+<div class="wizard-panel quick-wizard-panel reveal delay-1">
+<div class="wizard-top"><div><strong id="stepTitle">Contact Details</strong></div><span id="progressPercent">14%</span></div>
+<div class="progress"><i id="progressFill"></i></div>
+<form id="intakeForm" novalidate="">
+<section class="form-step active contact-capture-step" data-title="Contact Details">
+<h2>Start your free case review</h2>
+<p class="step-subtitle">Enter your details first so we can contact you even if you do not finish every question.</p>
+<div class="form-grid quick-contact-grid">
+<label>Full name<input autocomplete="name" name="full_name" required="" type="text"/></label>
+<label>Phone number<input autocomplete="tel" inputmode="tel" name="phone" required="" type="tel"/></label>
+<label>State<select name="state" required=""><option value="">Select a state</option><option value="Alabama">Alabama</option><option value="Alaska">Alaska</option><option value="Arizona">Arizona</option><option value="Arkansas">Arkansas</option><option value="California">California</option><option value="Colorado">Colorado</option><option value="Connecticut">Connecticut</option><option value="Delaware">Delaware</option><option value="Florida">Florida</option><option value="Georgia">Georgia</option><option value="Hawaii">Hawaii</option><option value="Idaho">Idaho</option><option value="Illinois">Illinois</option><option value="Indiana">Indiana</option><option value="Iowa">Iowa</option><option value="Kansas">Kansas</option><option value="Kentucky">Kentucky</option><option value="Louisiana">Louisiana</option><option value="Maine">Maine</option><option value="Maryland">Maryland</option><option value="Massachusetts">Massachusetts</option><option value="Michigan">Michigan</option><option value="Minnesota">Minnesota</option><option value="Mississippi">Mississippi</option><option value="Missouri">Missouri</option><option value="Montana">Montana</option><option value="Nebraska">Nebraska</option><option value="Nevada">Nevada</option><option value="New Hampshire">New Hampshire</option><option value="New Jersey">New Jersey</option><option value="New Mexico">New Mexico</option><option value="New York">New York</option><option value="North Carolina">North Carolina</option><option value="North Dakota">North Dakota</option><option value="Ohio">Ohio</option><option value="Oklahoma">Oklahoma</option><option value="Oregon">Oregon</option><option value="Pennsylvania">Pennsylvania</option><option value="Rhode Island">Rhode Island</option><option value="South Carolina">South Carolina</option><option value="South Dakota">South Dakota</option><option value="Tennessee">Tennessee</option><option value="Texas">Texas</option><option value="Utah">Utah</option><option value="Vermont">Vermont</option><option value="Virginia">Virginia</option><option value="Washington">Washington</option><option value="West Virginia">West Virginia</option><option value="Wisconsin">Wisconsin</option><option value="Wyoming">Wyoming</option></select></label>
+<label>Email <small>(optional)</small><input autocomplete="email" name="email" type="email"/></label>
+</div>
+<label class="consent quick-consent"><input name="contact_consent" required="" type="checkbox"/><span>I agree that ClaimAxis may call or text me regarding this inquiry. Message and data rates may apply.</span></label>
+<p class="fine-print">ClaimAxis is not a law firm. Your information is not automatically sent to a law firm.</p>
+</section>
+<section class="form-step" data-title="Injury">
+<h2>Were you injured in the accident?</h2>
+<div class="choice-grid"><label><input name="injured" required="" type="radio" value="Yes"/><span>Yes</span></label><label><input name="injured" type="radio" value="No"/><span>No</span></label></div>
+</section>
+<section class="form-step" data-title="Incident Type">
+<h2>What type of incident was it?</h2>
+<div class="choice-grid two">
+<label><input name="incident_type" required="" type="radio" value="Car Accident"/><span>Car Accident</span></label>
+<label><input name="incident_type" type="radio" value="Truck Accident"/><span>Truck Accident</span></label>
+<label><input name="incident_type" type="radio" value="Motorcycle Accident"/><span>Motorcycle</span></label>
+<label><input name="incident_type" type="radio" value="Uber/Lyft"/><span>Uber / Lyft</span></label>
+<label><input name="incident_type" type="radio" value="Pedestrian"/><span>Pedestrian</span></label>
+<label><input name="incident_type" type="radio" value="Other"/><span>Other</span></label>
+</div>
+</section>
+<section class="form-step" data-title="Date">
+<h2>When did it happen?</h2>
+<label>Accident date<input name="accident_date" required="" type="date"/></label>
+</section>
+<section class="form-step" data-title="Treatment">
+<h2>Did you receive medical treatment?</h2>
+<label>Treatment received<select name="treatment" required=""><option value="">Select one</option><option>Emergency room</option><option>Ambulance</option><option>Hospital</option><option>Doctor or urgent care</option><option>Chiropractor / physical therapy</option><option>No treatment yet</option></select></label>
+<label>Describe your injuries <small>(optional)</small><textarea name="injuries" rows="3"></textarea></label>
+</section>
+<section class="form-step" data-title="Attorney Status">
+<h2>Do you already have an attorney?</h2>
+<div class="choice-grid"><label><input name="has_attorney" required="" type="radio" value="No"/><span>No</span></label><label><input name="has_attorney" type="radio" value="Yes"/><span>Yes</span></label></div>
+<label>Who appears to be at fault?<select name="fault" required=""><option value="">Select one</option><option>The other party</option><option>I may be partly at fault</option><option>Not sure</option></select></label>
+</section>
+<section class="form-step" data-title="Final Details">
+<h2>Briefly tell us what happened.</h2>
+<label><textarea name="description" required="" rows="5"></textarea></label>
+<label>Preferred contact<select name="preferred_contact" required=""><option value="">Select one</option><option>Phone call</option><option>Text message</option><option>Email</option></select></label>
+<p class="fine-print">Submitting an inquiry does not create an attorney-client relationship and does not guarantee representation or compensation.</p>
+</section>
+<div class="wizard-actions"><button class="btn back" id="prevBtn" type="button">Back</button><button class="btn gold" id="nextBtn" type="button">Start My Free Review</button><button class="btn gold" id="submitBtn" type="submit">Complete My Review</button></div>
+</form>
+<div class="success-box" id="successPanel"><div>✓</div><h3>Your review is complete.</h3><p>A ClaimAxis intake representative may call you to verify the accident details. Your information is not automatically sent to a law firm.</p></div>
+</div>
+</div>
+</section>
+<section class="office-location-section">
+<div class="container office-location-grid">
+<div class="office-location-copy">
+<span class="eyebrow">OUR NEW YORK OFFICE</span>
+<h2>Located in the heart of Manhattan.</h2>
+<p>ClaimAxis maintains a professional business presence at this New York address.</p>
+<a class="office-address-link" href="https://www.google.com/maps/search/?api=1&amp;query=276+5th+Avenue+Suite+704+New+York+NY+10001" rel="noopener" target="_blank">
+<span aria-hidden="true" class="location-pin">📍</span>
+<span><strong>276 5th Avenue, Suite 704</strong><small>New York, NY 10001</small></span>
+</a>
+<a class="btn outline map-button" href="https://www.google.com/maps/search/?api=1&amp;query=276+5th+Avenue+Suite+704+New+York+NY+10001" rel="noopener" target="_blank">View on Google Maps</a>
+</div>
+<div class="office-map-wrap">
+<iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=276%205th%20Avenue%20Suite%20704%20New%20York%20NY%2010001&amp;output=embed" title="ClaimAxis New York office location"></iframe>
+</div>
+</div>
+</section>
+</main>
+<script src="wizard.js"></script><script src="main.js"></script>
 </body>
 </html>
