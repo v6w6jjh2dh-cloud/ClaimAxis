@@ -12,6 +12,19 @@ let current=0;
 let capturedLeadId='';
 let captureToken='';
 
+function trackLeadOnce(stage){
+  try{
+    if(sessionStorage.getItem('claimaxis_meta_lead_sent')==='1') return;
+    if(typeof window.fbq==='function'){
+      window.fbq('track','Lead',{content_name:stage||'Contact Captured'});
+      sessionStorage.setItem('claimaxis_meta_lead_sent','1');
+      console.log('Meta Lead event sent:',stage||'Contact Captured');
+    }
+  }catch(error){
+    console.warn('Meta Lead tracking failed:',error);
+  }
+}
+
 function render(){
   steps.forEach((s,i)=>s.classList.toggle('active',i===current));
   const p=Math.round(((current+1)/steps.length)*100);
@@ -81,6 +94,7 @@ async function captureContact(){
   captureToken=result.capture_token;
   sessionStorage.setItem('claimaxis_lead_id',capturedLeadId);
   sessionStorage.setItem('claimaxis_capture_token',captureToken);
+  trackLeadOnce('Contact Captured');
 }
 
 nextBtn.onclick=async()=>{
@@ -132,7 +146,7 @@ form.onsubmit=async(e)=>{
     if(!response.ok||!result.ok) throw new Error(result.error||'No se pudo completar su evaluación.');
 
     if(typeof window.fbq==='function'){
-      window.fbq('track','Lead',{content_name:'Completed Case Review'});
+      window.fbq('track','CompleteRegistration',{content_name:'Completed Case Review'});
     }
 
     form.style.display='none';
