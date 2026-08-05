@@ -13,7 +13,7 @@
   <div class="noise"></div>
   <header class="header"><div class="container nav">
     <a class="brand" href="index.html"><span class="brand-mark">CA</span><span class="brand-name">Claim<span>Axis</span></span></a>
-    <div class="nav-actions"><a class="pill" href="get-leads.html">For Law Firms</a></div>
+    <div class="nav-actions"><div class="language-switch" aria-label="Language"><a class="active" href="injury-help.html">EN</a><span>|</span><a href="injury-help-es.html">ES</a></div><a class="pill" href="get-leads.html">For Law Firms</a></div>
   </div></header>
 
   <main class="review-page">
@@ -27,13 +27,13 @@
         </div>
 
         <div class="wizard-panel quick-wizard-panel reveal delay-1">
-          <div class="wizard-top"><div><small id="stepLabel"></small><strong id="stepTitle">Contact Details</strong></div><span id="progressPercent">14%</span></div>
+          <div class="wizard-top"><div><strong id="stepTitle">Contact Details</strong></div><span id="progressPercent">14%</span></div>
           <div class="progress"><i id="progressFill"></i></div>
 
           <form id="intakeForm" novalidate>
             <section class="form-step active contact-capture-step" data-title="Contact Details">
-              <h2>Find Out If You May Qualify</h2>
-              <p class="step-subtitle">Free • Confidential • No Obligation</p>
+              <h2>Start your free case review</h2>
+              <p class="step-subtitle">Enter your details first so we can contact you even if you do not finish every question.</p>
               <div class="form-grid quick-contact-grid">
                 <label>Full name<input type="text" name="full_name" autocomplete="name" required></label>
                 <label>Phone number<input type="tel" name="phone" autocomplete="tel" inputmode="tel" required></label>
@@ -41,7 +41,6 @@
                 <label>Email <small>(optional)</small><input type="email" name="email" autocomplete="email"></label>
               </div>
               <label class="consent quick-consent"><input type="checkbox" name="contact_consent" required><span>I agree that ClaimAxis may call or text me regarding this inquiry. Message and data rates may apply.</span></label>
-              <p class="privacy-reassurance">🔒 Your information is 100% confidential.</p>
               <p class="fine-print">ClaimAxis is not a law firm. Your information is not automatically sent to a law firm.</p>
             </section>
 
@@ -86,10 +85,28 @@
               <p class="fine-print">Submitting an inquiry does not create an attorney-client relationship and does not guarantee representation or compensation.</p>
             </section>
 
-            <div class="wizard-actions"><button type="button" class="btn back" id="prevBtn">Back</button><button type="button" class="btn gold" id="nextBtn">Get My Free Review</button><button type="submit" class="btn gold" id="submitBtn">Complete My Review</button></div>
+            <div class="wizard-actions"><button type="button" class="btn back" id="prevBtn">Back</button><button type="button" class="btn gold" id="nextBtn">Start My Free Review</button><button type="submit" class="btn gold" id="submitBtn">Complete My Review</button></div>
           </form>
 
           <div class="success-box" id="successPanel"><div>✓</div><h3>Your review is complete.</h3><p>A ClaimAxis intake representative may call you to verify the accident details. Your information is not automatically sent to a law firm.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="office-location-section">
+      <div class="container office-location-grid">
+        <div class="office-location-copy">
+          <span class="eyebrow">OUR NEW YORK OFFICE</span>
+          <h2>Located in the heart of Manhattan.</h2>
+          <p>ClaimAxis maintains a professional business presence at this New York address.</p>
+          <a class="office-address-link" href="https://www.google.com/maps/search/?api=1&query=276+5th+Avenue+Suite+704+New+York+NY+10001" target="_blank" rel="noopener">
+            <span class="location-pin" aria-hidden="true">📍</span>
+            <span><strong>276 5th Avenue, Suite 704</strong><small>New York, NY 10001</small></span>
+          </a>
+          <a class="btn outline map-button" href="https://www.google.com/maps/search/?api=1&query=276+5th+Avenue+Suite+704+New+York+NY+10001" target="_blank" rel="noopener">View on Google Maps</a>
+        </div>
+        <div class="office-map-wrap">
+          <iframe title="ClaimAxis New York office location" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=276%205th%20Avenue%20Suite%20704%20New%20York%20NY%2010001&output=embed"></iframe>
         </div>
       </div>
     </section>

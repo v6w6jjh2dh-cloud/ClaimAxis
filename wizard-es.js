@@ -22,8 +22,8 @@ function render(){
   prevBtn.style.visibility=current===0?'hidden':'visible';
   nextBtn.style.display=current===steps.length-1?'none':'inline-flex';
   submitBtn.style.display=current===steps.length-1?'inline-flex':'none';
-  if(current===0) nextBtn.textContent=capturedLeadId?'Continue':'Start My Free Review';
-  else nextBtn.textContent='Continue';
+  if(current===0) nextBtn.textContent=capturedLeadId?'Continuar':'Comenzar mi evaluación gratuita';
+  else nextBtn.textContent='Continuar';
 }
 
 function valid(){
@@ -76,7 +76,7 @@ async function captureContact(){
     body:JSON.stringify(payload)
   });
   const result=await response.json();
-  if(!response.ok||!result.ok) throw new Error(result.error||'Unable to save your contact details.');
+  if(!response.ok||!result.ok) throw new Error(result.error||'No se pudieron guardar sus datos de contacto.');
   capturedLeadId=result.lead_id;
   captureToken=result.capture_token;
   sessionStorage.setItem('claimaxis_lead_id',capturedLeadId);
@@ -87,16 +87,16 @@ nextBtn.onclick=async()=>{
   if(!valid()||current>=steps.length-1) return;
 
   if(current===0&&!capturedLeadId){
-    const normal='Start My Free Review';
-    setButtonBusy(nextBtn,true,'Saving…',normal);
+    const normal='Comenzar mi evaluación gratuita';
+    setButtonBusy(nextBtn,true,'Guardando…',normal);
     try{
       await captureContact();
     }catch(error){
-      alert(error.message||'Unable to save. Please try again.');
-      setButtonBusy(nextBtn,false,'Saving…',normal);
+      alert(error.message||'No se pudo guardar. Inténtelo de nuevo.');
+      setButtonBusy(nextBtn,false,'Guardando…',normal);
       return;
     }
-    setButtonBusy(nextBtn,false,'Saving…','Continue');
+    setButtonBusy(nextBtn,false,'Guardando…','Continuar');
   }
 
   current++;
@@ -111,11 +111,11 @@ form.onsubmit=async(e)=>{
   if(!valid()) return;
 
   if(!capturedLeadId||!captureToken){
-    alert('Your contact session expired. Please return to the first step and try again.');
+    alert('Su sesión expiró. Regrese al primer paso e inténtelo de nuevo.');
     current=0;render();return;
   }
 
-  setButtonBusy(submitBtn,true,'Submitting…','Complete My Review');
+  setButtonBusy(submitBtn,true,'Enviando…','Completar mi evaluación');
   const data=new FormData(form);
   const payload=Object.fromEntries(data.entries());
   payload.capture_token=captureToken;
@@ -129,19 +129,19 @@ form.onsubmit=async(e)=>{
       body:JSON.stringify(payload)
     });
     const result=await response.json();
-    if(!response.ok||!result.ok) throw new Error(result.error||'Unable to complete your review.');
+    if(!response.ok||!result.ok) throw new Error(result.error||'No se pudo completar su evaluación.');
 
     form.style.display='none';
     success.style.display='block';
     const idLine=document.createElement('p');
     idLine.className='submission-reference';
-    idLine.textContent=`Reference: ${capturedLeadId}`;
+    idLine.textContent=`Referencia: ${capturedLeadId}`;
     success.appendChild(idLine);
     sessionStorage.removeItem('claimaxis_lead_id');
     sessionStorage.removeItem('claimaxis_capture_token');
   }catch(error){
-    alert(error.message||'Unable to submit. Please try again.');
-    setButtonBusy(submitBtn,false,'Submitting…','Complete My Review');
+    alert(error.message||'No se pudo enviar. Inténtelo de nuevo.');
+    setButtonBusy(submitBtn,false,'Enviando…','Completar mi evaluación');
   }
 };
 

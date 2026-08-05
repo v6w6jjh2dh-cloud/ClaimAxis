@@ -981,4 +981,15 @@ button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none!important}
   .quick-wizard-panel{padding:16px 13px}
 }
 
-.privacy-reassurance{margin:12px 0 0;color:#dbe8f3;font-size:.9rem;font-weight:700;text-align:center}
+
+/* English / Spanish language switch and New York office map */
+.language-switch{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.025);font-size:.78rem;font-weight:800;letter-spacing:.08em}
+.language-switch a{color:#8699ab;text-decoration:none}.language-switch a.active,.language-switch a:hover{color:var(--gold2,#e0b45e)}.language-switch span{color:#526577}
+.office-location-section{padding:72px 0;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(8,20,32,.45),rgba(5,12,20,.8))}
+.office-location-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:34px;align-items:center}
+.office-location-copy h2{font-size:clamp(2rem,4vw,3.6rem);margin:10px 0 14px}.office-location-copy>p{color:var(--muted);max-width:560px;line-height:1.7}
+.office-address-link{display:flex;align-items:center;gap:13px;margin:24px 0 18px;padding:17px 18px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.025);text-decoration:none;color:#fff;transition:.2s}
+.office-address-link:hover{border-color:rgba(224,180,94,.55);transform:translateY(-2px)}.office-address-link strong,.office-address-link small{display:block}.office-address-link small{margin-top:4px;color:#8da0b2}.location-pin{font-size:1.45rem}.map-button{display:inline-flex}
+.office-map-wrap{overflow:hidden;min-height:360px;border:1px solid var(--line);border-radius:22px;background:#08131f;box-shadow:0 28px 70px rgba(0,0,0,.28)}.office-map-wrap iframe{display:block;width:100%;height:400px;border:0;filter:saturate(.75) contrast(1.02)}
+.contact-map-section{padding:0 0 72px}.contact-map-section .office-map-wrap{min-height:430px}.contact-map-section iframe{height:430px}
+@media(max-width:820px){.language-switch{padding:7px 9px}.office-location-section{padding:44px 0}.office-location-grid{grid-template-columns:1fr;gap:22px}.office-location-copy{text-align:center}.office-location-copy>p{margin-inline:auto}.office-address-link{text-align:left}.map-button{justify-content:center}.office-map-wrap,.office-map-wrap iframe{min-height:300px;height:300px}.contact-map-section{padding-bottom:44px}}
