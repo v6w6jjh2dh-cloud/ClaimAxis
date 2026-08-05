@@ -81,7 +81,6 @@ async function captureContact(){
   captureToken=result.capture_token;
   sessionStorage.setItem('claimaxis_lead_id',capturedLeadId);
   sessionStorage.setItem('claimaxis_capture_token',captureToken);
-  if(window.fbq){fbq('track','Lead');}
 }
 
 nextBtn.onclick=async()=>{
@@ -131,6 +130,10 @@ form.onsubmit=async(e)=>{
     });
     const result=await response.json();
     if(!response.ok||!result.ok) throw new Error(result.error||'Unable to complete your review.');
+
+    if(typeof window.fbq==='function'){
+      window.fbq('track','Lead',{content_name:'Completed Case Review'});
+    }
 
     form.style.display='none';
     success.style.display='block';
